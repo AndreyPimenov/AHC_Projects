@@ -46,35 +46,35 @@ def middle_line(Ax,Ay,Bx,By,Cx,Cy,Dx,Dy):
     E - середина AD, F - середина BC
     """
     # general case:
-    if (Ay != Dy) and (By != Cy):
-        Ey = (Dy - Ay) / 2
-        Ex = abs(Dx - Ax) / 2  # потому, что наклон не предсказуем
-        Fy = (Cy - By) / 2
-        Fx = abs(Cx - Bx) / 2  # потому, что наклон не предсказуем
+    if (Ax != Dx) and (Bx != Cx):
+        Ex = min(Ax, Dx) + abs(Dx - Ax) / 2  # потому, что наклон не предсказуем
+        Ey = Ay + ((Dy - Ay) / 2)
+        Fx = min(Bx, Cx) + abs(Bx - Cx) / 2  # потому, что наклон не предсказуем
+        Fy = By + ((Cy - By) / 2)
         print("general case: ", Ex, Ey, Fx, Fy)
 
     # left - equal  case:
-    elif (Ay == By) and (Dy != Cy):
-        Ey = Ay
-        Ex = abs(Dx - Ax) / 2  # потому, что наклон не предсказуем
-        Fy = (Cy - By) / 2
-        Fx = abs(Cx - Bx) / 2  # потому, что наклон не предсказуем
+    elif (Ax == Dx) and (Bx != Cx):
+        Ex = Dx
+        Ey = Ay + ((Dy - Ay) / 2)
+        Fx = min(Bx, Cx) + abs(Bx - Cx) / 2  # потому, что наклон не предсказуем
+        Fy = By + ((Cy - By) / 2)
         print("left-equal case: ", Ex, Ey, Fx, Fy)
 
     # right - equal Case:
-    elif (Ay != By) and (Dy != Cy):
-        Ey = (Dy - Ay) / 2
-        Ex = abs(Dx - Ax) / 2  # потому, что наклон не предсказуем
-        Fy = Cy
-        Fx = abs(Cx - Bx) / 2  # потому, что наклон не предсказуем
+    elif (Ax != Dx) and (Bx == Cx):
+        Ex = min(Ax, Dx) + abs(Dx - Ax) / 2  # потому, что наклон не предсказуем
+        Ey = Ay + ((Dy - Ay) / 2)
+        Fx = Cx
+        Fy = By + ((Cy - By) / 2)
         print("right - equal case: ", Ex, Ey, Fx, Fy)
 
     # ideal case:
-    elif (Ay != By) and (Dy != Cy):
-        Ey = Dy
-        Ex = abs(Dx - Ax) / 2  # потому, что наклон не предсказуем
-        Fy = Cy
-        Fx = abs(Cx - Bx) / 2  # потому, что наклон не предсказуем
+    elif (Ax == Dx) and (Bx == Cx):
+        Ex = Dx
+        Ey = Ay + ((Dy - Ay) / 2)
+        Fx = Cx
+        Fy = By + ((Cy - By) / 2)
         print("ideal case: ", Ex, Ey, Fx, Fy)
 
     # unreal case:
@@ -85,10 +85,11 @@ def middle_line(Ax,Ay,Bx,By,Cx,Cy,Dx,Dy):
 # -----------------------------
 
 
-Ax, Ay = 0, 70
+Ax, Ay = 10, 70
 Bx, By = 239, 75
-Cx, Cy = 0, 172
-Dx, Dy = 239, 178
+Cx, Cy = 229, 178
+Dx, Dy = 0, 172
+
 color_purple = (255,0,255)
 
 # Upload picture
