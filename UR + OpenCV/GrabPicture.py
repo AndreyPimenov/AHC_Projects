@@ -82,6 +82,54 @@ def middle_line(Ax,Ay,Bx,By,Cx,Cy,Dx,Dy):
         print("Interesting Exception")
         Ex, Ey, Fx, Fy = 1, 2, 3, 4
     return int(Ex), int(Ey), int(Fx), int(Fy)
+
+def middle_line_vertical(Ax,Ay,Bx,By,Cx,Cy,Dx,Dy):
+    """
+    Координыты точек G и H:
+    G - середина AD, F - середина BC
+    От прошлой программы отличается тем, что:
+    все В и D меняю местами, а также меняю местами x и y
+    """
+    # general case:
+    if (Ay != By) and (Dy != Cy):
+        Gy = min(Ay, By) + abs(By - Ay) / 2  # потому, что наклон не предсказуем
+        Gx = Ax + ((Bx - Ax) / 2)
+        Hy = min(Dy, Cy) + abs(Dy - Cy) / 2  # потому, что наклон не предсказуем
+        Hx = Dx + ((Cx - Dx) / 2)
+        print("general case: ", Gx, Gy, Hx, Hy)
+
+    # left - equal  case:
+    elif (Ay == By) and (Dy != Cy):
+        Gy = By
+        Gx = Ax + ((Bx - Ax) / 2)
+        Hy = min(Dy, Cy) + abs(Dy - Cy) / 2  # потому, что наклон не предсказуем
+        Hx = Dx + ((Cx - Dx) / 2)
+        print("left-equal case: ", Gx, Gy, Hy, Hx)
+
+    # right - equal Case:
+    elif (Ay != By) and (Dy == Cy):
+        Gy = min(Ay, By) + abs(By - Ay) / 2  # потому, что наклон не предсказуем
+        Gx = Ax + ((Bx - Ax) / 2)
+        Hy = Cy
+        Hx = Dx + ((Cx - Dx) / 2)
+        print("right - equal case: ", Gx, Gy, Hx, Hy)
+
+    # ideal case:
+    elif (Ax == Bx) and (Dx == Cx):
+        Gx = Bx
+        Gy = Ay + ((Dy - Ay) / 2)
+        Hx = Cx
+        Hy = Dy + ((Cy - Dy) / 2)
+        print("ideal case: ", Gx, Gy, Hx, Hy)
+
+    # unreal case:
+    else:
+        print("Interesting Exception")
+        Gx, Gy, Hx, Hy = 1, 2, 3, 4
+    return int(Gx), int(Gy), int(Hx), int(Hy)
+
+
+
 # -----------------------------
 
 
@@ -90,12 +138,12 @@ Bx, By = 239, 75
 Cx, Cy = 229, 178
 Dx, Dy = 0, 172
 
-color_purple = (255,0,255)
+color_purple = (255, 0, 255)
 
 # Upload picture
 cadr = cv2.imread(r'C:\Users\a.pimenov\PycharmProjects\UR_Robotics\Source_Vision\capture.jpg')#, cv2.IMREAD_GRAYSCALE)
 
-while (True):
+while True:
 
     # ROI
     frame = cadr[160:480, 120:360]
@@ -103,6 +151,10 @@ while (True):
 
     Ex, Ey, Fx, Fy = middle_line(Ax, Ay, Bx, By, Cx, Cy, Dx, Dy)
     cv2.line(frame, (Ex, Ey), (Fx, Fy), color_purple, thickness=1, lineType=8, shift=0)
+
+    Gx, Gy, Hx, Hy = middle_line_vertical(Ax, Ay, Bx, By, Cx, Cy, Dx, Dy)
+    cv2.line(frame, (Gx, Gy), (Hx, Hy), color_purple, thickness=1, lineType=8, shift=0)
+
 
     if cv2.waitKey(1) % 0xFF == ord('q'):
         break
