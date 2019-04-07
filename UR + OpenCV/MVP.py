@@ -27,7 +27,8 @@ def Line_Boarder_Estimation(cadr):
     #cv2.imwrite('ROI.png', frame)
 
     # Blurring - it is need for reality
-
+    frame = cv2.GaussianBlur(frame, (5, 5), cv2.BORDER_DEFAULT)
+    #cv2.blur(frame,5)
     # Binarisation
 
     # Detecting the points
@@ -168,11 +169,28 @@ capture = cv2.VideoCapture(0)
 
 while True:
     ret, frame = capture.read()  # делаем снимок в случае захвата с камеры
-
-    cadr = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    cadr = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  #RGB)   #HSV)   #GRAY)
 
     # ROI
     frame = cadr[160:480, 120:360]
+
+    # For blink materials is it necessary to use histogram redistribution
+    small_frame_left = frame[60:180, 0:20]
+    small_frame_right = frame[60:180, 220:240]
+
+    # Blurring - it is need for reality
+    blur_left_frame = cv2.GaussianBlur(small_frame_left, (3, 3), cv2.BORDER_DEFAULT)
+    blur_right_frame = cv2.GaussianBlur(small_frame_right, (3,3),cv2.BORDER_DEFAULT)
+
+    # Binarisation
+    left_frame = cv2.adaptiveThreshold(blur_left_frame, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+    right_frame = cv2.adaptiveThreshold(blur_right_frame, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+
+    # Finalisation:
+    frame[60:180, 0:20] = left_frame
+    frame[60:180, 220:240] = right_frame
+
+
 
     Ex, Ey, Fx, Fy = middle_line(Ax, Ay, Bx, By, Cx, Cy, Dx, Dy)
     cv2.line(frame, (Ex, Ey), (Fx, Fy), color_purple, thickness=1, lineType=8, shift=0)
@@ -186,6 +204,7 @@ while True:
     cv2.imshow("ROI", frame)
 
     if cv2.waitKey(1) % 0xFF == ord('q'):
+        cv2.imwrite("working.jpg", frame)
         break
 
 print('End')
