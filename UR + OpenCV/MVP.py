@@ -129,15 +129,34 @@ def middle_line_vertical(Ax,Ay,Bx,By,Cx,Cy,Dx,Dy):
     return int(Gx), int(Gy), int(Hx), int(Hy)
 
 def center_finding(Ex, Ey, Fx, Fy, Gx, Gy, Hx, Hy):
-    print()
+    """
+    Solve this problem through common line equation
+    1. Write them for EF & GH
+    2. Express x through y from the EF
+    3. x = x, so equate left & right
+    4. find y
+    5. find x
+    :return: Ox, Oy
+    """
+    Kfe = (Fx - Ex) / (Fy - Ey)
+    Khg = (Hx - Gx) / (Hy - Gy)
+
+    Oy = 1 / (Kfe - Khg) * (Ey*Kfe - Ex - Gy*Khg + Gx)
+
+    Ox = Oy * Kfe - Ey * Kfe + Ex
+
+    print(Ox, Oy)
+
+    return int(Ox), int(Oy)
 
 # -----------------------------
 
 
-Ax, Ay = 0, 70
-Bx, By = 240, 75
-Cx, Cy = 240, 178
-Dx, Dy = 0, 172
+# Our case:
+Ax, Ay = 10, 70
+Bx, By = 230, 75
+Cx, Cy = 230, 178
+Dx, Dy = 10, 172
 
 color_purple = (255, 0, 255)
 
@@ -161,10 +180,12 @@ while True:
     Gx, Gy, Hx, Hy = middle_line_vertical(Ax, Ay, Bx, By, Cx, Cy, Dx, Dy)
     cv2.line(frame, (Gx, Gy), (Hx, Hy), color_purple, thickness=1, lineType=8, shift=0)
 
+    Ox, Oy = center_finding(Ex, Ey, Fx, Fy, Gx, Gy, Hx, Hy)
+    cv2.circle(frame, (Ox, Oy), 2, (0, 255, 0), 4)
+
     cv2.imshow("ROI", frame)
 
     if cv2.waitKey(1) % 0xFF == ord('q'):
         break
 
 print('End')
-
