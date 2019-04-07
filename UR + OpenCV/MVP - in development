@@ -147,8 +147,15 @@ def center_finding(Ex, Ey, Fx, Fy, Gx, Gy, Hx, Hy):
     5. find x
     :return: Ox, Oy
     """
-    Kfe = (Fx - Ex) / (Fy - Ey)
-    Khg = (Hx - Gx) / (Hy - Gy)
+    if (Fy == Ey):
+        Kfe = Fx - Ex
+    else:
+        Kfe = (Fx - Ex) / (Fy - Ey)
+
+    if (Hy == Gy):
+        Khg = Hx - Gx
+    else:
+        Khg = (Hx - Gx) / (Hy - Gy)
 
     Oy = 1 / (Kfe - Khg) * (Ey*Kfe - Ex - Gy*Khg + Gx)
 
