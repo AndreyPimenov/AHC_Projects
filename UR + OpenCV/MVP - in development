@@ -1,3 +1,6 @@
+# https://pythonru.com/uroki/obuchenie-python-gui-uroki-po-tkinter
+# New algorithm:
+# Основан на другом уравнении прямой и в 5 утра я пойду его писать.
 import os
 import cv2
 import numpy as np
@@ -179,22 +182,31 @@ def coordinates_detector(frame, Ax, Bx, Ay,By):
     :param frame:
     :return: Ay, Dy, By, Cy
     """
-    left_list, right_list = str(), str()
+    # Решение через списки:
+    left_list, right_list = list(), list()
+
+    # Решение через строки:
+    #left_list, right_list = str(), str()
 
     for y in range(60, 180):
-        #left_list.append(frame[y, Ax])
-        left_list = left_list + ' ' + str(frame[y, Ax])
-        right_list = right_list + ' ' +str(frame[y,Bx])
-        #right_list.append(frame[y,Bx])
+        # Решение через списки:
+        left_list.append(frame[y, Ax])
+        right_list.append(frame[y, Bx])
 
-    Ay = 60 + int(left_list.find('0') / 3)
-    Dy = Ay + int(left_list.rfind('0') / 3)
-    By = 60 + int(right_list.find('0') / 3)
-    Cy = By + int(right_list.rfind('0') / 3)
+        # решение через строки:
+        #left_list = left_list + ' ' + str(frame[y, Ax])
+        #right_list = right_list + ' ' +str(frame[y,Bx])
+
+    #Ay = 60 + int(left_list.find('0') / 3)
+    #Dy = Ay + int(left_list.rfind('0') / 3)
+    #By = 60 + int(right_list.find('0') / 3)
+    #Cy = By + int(right_list.rfind('0') / 3)
     #print(right_list)
-    #print ('Ay,Dy,By,Cy', Ay,Dy,By,Cy )
+    print ('Ay,Dy,By,Cy: ', Ay,Dy,By,Cy )
 
     return Ay,Dy,By,Cy
+
+
 # -----------------------------
 # Upload picture
 #cadr = cv2.imread(r'C:\Users\a.pimenov\PycharmProjects\UR_Robotics\Source_Vision\capture.jpg')#, cv2.IMREAD_GRAYSCALE)
@@ -228,6 +240,12 @@ while True:
     Ay,Dy,By,Cy = coordinates_detector(frame,Ax,Bx, Ay, By)
     #coordinates_detector(frame, Ax, Bx, Ay, By)
 
+    # Для проверки, отображение точек:
+    cv2.circle(frame, (Ax, Ay), 2, (0, 255, 0), 4)
+    cv2.circle(frame, (Dx, Dy), 2, (0, 255, 0), 4)
+    cv2.circle(frame, (Bx, By), 2, (0, 255, 0), 4)
+    cv2.circle(frame, (Cx, Cy), 2, (0, 255, 0), 4)
+
     Ex, Ey, Fx, Fy = middle_line(Ax, Ay, Bx, By, Cx, Cy, Dx, Dy)
     cv2.line(frame, (Ex, Ey), (Fx, Fy), color_purple, thickness=1, lineType=8, shift=0)
 
@@ -244,3 +262,4 @@ while True:
         break
 
 print('End')
+
