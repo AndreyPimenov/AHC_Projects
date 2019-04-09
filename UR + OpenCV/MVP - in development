@@ -98,27 +98,27 @@ def middle_line(Ax,Ay,Bx,By,Cx,Cy,Dx,Dy):
 def middle_line_vertical(Ax,Ay,Bx,By,Cx,Cy,Dx,Dy):
     """
     Координыты точек G и H:
-    G - середина AD, F - середина BC
+    G - середина AB, H - середина DC
     От прошлой программы отличается тем, что:
     все В и D меняю местами, а также меняю местами x и y
     """
     # general case:
     if (Ay != By) and (Dy != Cy):
         Gy = min(Ay, By) + abs(By - Ay) / 2  # потому, что наклон не предсказуем
-        Gx = Ax + ((Bx - Ax) / 2)
+        Gx = Ax + ((Bx - Ax) / 2)  # потому что:  Bx > Ax
         Hy = min(Dy, Cy) + abs(Dy - Cy) / 2  # потому, что наклон не предсказуем
-        Hx = Dx + ((Cx - Dx) / 2)
+        Hx = Dx + ((Cx - Dx) / 2)   # потому что:  Cx > Dx
         print("GH general case: ", Gx, Gy, Hx, Hy)
 
-    # left - equal  case:
+    # Top - equal  case:
     elif (Ay == By) and (Dy != Cy):
-        Gy = By
+        Gy = Ay
         Gx = Ax + ((Bx - Ax) / 2)
         Hy = min(Dy, Cy) + abs(Dy - Cy) / 2  # потому, что наклон не предсказуем
         Hx = Dx + ((Cx - Dx) / 2)
         print("GH left-equal case: ", Gx, Gy, Hy, Hx)
 
-    # right - equal Case:
+    # Bottom - equal Case:
     elif (Ay != By) and (Dy == Cy):
         Gy = min(Ay, By) + abs(By - Ay) / 2  # потому, что наклон не предсказуем
         Gx = Ax + ((Bx - Ax) / 2)
@@ -127,11 +127,11 @@ def middle_line_vertical(Ax,Ay,Bx,By,Cx,Cy,Dx,Dy):
         print("GH right - equal case: ", Gx, Gy, Hx, Hy)
 
     # ideal case:
-    elif (Ax == Bx) and (Dx == Cx):
-        Gx = Bx
-        Gy = Ay + ((Dy - Ay) / 2)
-        Hx = Cx
-        Hy = Dy + ((Cy - Dy) / 2)
+    elif (Ay == By) and (Dy == Cy):
+        Gy = By
+        Gx = Ax + ((Bx - Ax) / 2)
+        Hy = Dy
+        Hx = Dx + ((Cx - Dx) / 2)
         print("GH ideal case: ", Gx, Gy, Hx, Hy)
 
     # unreal case:
@@ -293,6 +293,8 @@ while True:
         break
 
 print('End')
+
+
 
 
 
