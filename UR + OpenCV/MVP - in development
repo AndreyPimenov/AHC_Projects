@@ -188,10 +188,41 @@ def coordinates_detector(frame, Ax, Bx, Ay,By):
     # Решение через строки:
     #left_list, right_list = str(), str()
 
-    for y in range(60, 180):
+    # Далее для увеличения скорости работы - работать с массивами
+
+    for y in range(60, 140):
         # Решение через списки:
         left_list.append(frame[y, Ax])
         right_list.append(frame[y, Bx])
+    Ay, Dy, By, Cy = 0, 0, 0, 0
+    for i in range(len(left_list) - 1):
+        if (left_list[i] == 0) and (left_list[i-1] == 0):
+            if Ay == 0:
+                #Ay = left_list[i]
+                #i = i + 10
+                Ay = i
+            else:
+                Dy = left_list[i]
+                break
+    print('left_list: ', left_list)
+
+    for i in range (len(right_list) - 1):
+        if (right_list[i] == 0) and (right_list[i - 1] == 0):
+            if By == 0:
+                #Ay = right_list[i]
+                #i = i + 10
+                By = i
+            else:
+                #Cy = right_list[i]
+                Cy = i
+                break
+    print ('right_list: ', right_list)
+
+    Ay = 60 + Ay #int(left_list.find('0'))
+    Dy = 60 + Dy #int(left_list.rfind('0'))
+    By = 60 + By #int(right_list.find('0'))
+    Cy = 60 + Cy #int(right_list.rfind('0'))
+
 
         # решение через строки:
         #left_list = left_list + ' ' + str(frame[y, Ax])
@@ -226,8 +257,8 @@ while True:
     small_frame_right = frame[60:180, 220:240]
 
     # Blurring - it is need for reality
-    blur_left_frame = cv2.GaussianBlur(small_frame_left, (3, 3), cv2.BORDER_DEFAULT)
-    blur_right_frame = cv2.GaussianBlur(small_frame_right, (3,3),cv2.BORDER_DEFAULT)
+    blur_left_frame = cv2.GaussianBlur(small_frame_left, (7, 7), cv2.BORDER_DEFAULT)
+    blur_right_frame = cv2.GaussianBlur(small_frame_right, (7, 7),cv2.BORDER_DEFAULT)
 
     # Binarisation
     left_frame = cv2.adaptiveThreshold(blur_left_frame, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
@@ -262,4 +293,6 @@ while True:
         break
 
 print('End')
+
+
 
