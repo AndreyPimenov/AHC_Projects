@@ -1,6 +1,7 @@
 # http://robotclass.ru/tutorials/opencv-color-range-filter/
 # https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_gui/py_trackbar/py_trackbar.html
 # https://docs.opencv.org/3.4/da/d97/tutorial_threshold_inRange.html
+# http://robotclass.ru/tutorials/opencv-moments-color-object-search/
 
 import os
 import cv2
@@ -11,7 +12,7 @@ from matplotlib import pyplot as plt
 def nothing(x):
     pass
 
-def HSV_color_filter_callibration(source):
+def hsv_color_filter_callibration(source):
     cv2.namedWindow("result")  # creating main window
     cv2.namedWindow("settings")  # for callibration
 
@@ -57,37 +58,50 @@ def web_camera(source):  #, hsv_min, hsv_max):
     cap = cv2.VideoCapture(source)
     while True:
         ret, frame = cap.read()
-        frame = frame[0:300, 200:400]
+        #frame = frame[0:300, 200:400]
+        frame = frame[0:250, 200:400]
 
         # It is useful to work with small areas:
         top_frame = frame[30:50, 30:150]
-        bottom_frame = frame[230:250, 30:150]
+        bottom_frame = frame[200:220, 30:150]
+        print('top_frame: ', np.shape(top_frame))
 
         # Blurring - it is need for reality
-        #blur_top_frame = cv2.GaussianBlur(top_frame, (7, 7), cv2.BORDER_DEFAULT)
-        #blur_bottom_frame = cv2.GaussianBlur(bottom_frame, (7, 7), cv2.BORDER_DEFAULT)
-
-        # Binarisation
-        #top_frame_new = cv2.adaptiveThreshold(blur_top_frame, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-        #bottom_frame_new = cv2.adaptiveThreshold(blur_bottom_frame, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+        top_frame_blur = cv2.GaussianBlur(top_frame, (7, 7), cv2.BORDER_DEFAULT)
+        bottom_frame_blur = cv2.GaussianBlur(bottom_frame, (7, 7), cv2.BORDER_DEFAULT)
+        print('top_frame_blur: ', np.shape(top_frame_blur))
 
         # Change ColorSpace in small areas to HSV:
-        top_frame_HSV = cv2.cvtColor(top_frame, cv2.COLOR_BGR2HSV)
-        top_frame = cv2.inRange(top_frame_HSV, (19, 0, 1), (105, 255, 255))
+        top_frame_hsv = cv2.cvtColor(top_frame_blur, cv2.COLOR_BGR2HSV)
+        bottom_frame_hsv = cv2.cvtColor(bottom_frame_blur, cv2.COLOR_BGR2HSV)
+        print('top_frame_hsv: ', np.shape(top_frame_hsv))
 
-        bottom_frame_HSV = cv2.cvtColor(bottom_frame, cv2.COLOR_BGR2HSV)
+        # Create Mask, based on pre-calculation:
+        top_frame_mask = cv2.inRange(top_frame_hsv, (21, 1, 5), (105, 255, 255))
+        bottom_frame_mask = cv2.inRange(bottom_frame_hsv, (21, 1, 5), (105, 255, 255))
+        print('top_frame_mask: ', np.shape(top_frame_mask))
 
-        
+        # Putting mask on the Image:
+        top_frame_result = cv2.bitwise_and(top_frame_hsv, top_frame_hsv, mask=top_frame_mask)
+        bottom_frame_result = cv2.bitwise_and(bottom_frame_hsv, bottom_frame_hsv, mask=bottom_frame_mask)
+        print('top_frame_results: ', np.shape(top_frame_result))
+
+        # Binarisation
+        #top_frame_bin = cv2.adaptiveThreshold(top_frame_result, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+        #bottom_frame_bin = cv2.adaptiveThreshold(bottom_frame_result, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
 
         # Return these pieces to the main picture:
+        top_frame = top_frame_result
+        bottom_frame = bottom_frame_result
         frame[30:50, 30:150] = top_frame
-        frame[230:250, 30:150] = bottom_frame_HSV
+        frame[200:220, 30:150] = bottom_frame
 
         # frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         # kernel = np.ones((3, 3), np.float32) / 25
         # dst = cv2.filter2D(frame2, -1, kernel)
+
         cv2.imshow('frame', frame)
-        cv2.imwrite('frame_HSV.jpg', frame)
+        cv2.imwrite('Line_Detected.jpg', frame)
 
         if cv2.waitKey(1) % 0xFF == ord('q'):
             break
@@ -95,6 +109,42 @@ def web_camera(source):  #, hsv_min, hsv_max):
     cap.release()
     cv2.destroyAllWindows()
     return 0
+
+# Camera_callibration(
+def camera_callibration():
+    # termination criteria
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+
+    # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
+    objp = np.zeros((6 * 7, 3), np.float32)
+    objp[:, :2] = np.mgrid[0:7, 0:6].T.reshape(-1, 2)
+
+    # Arrays to store object points and image points from all the images.
+    objpoints = []  # 3d point in real world space
+    imgpoints = []  # 2d points in image plane.
+
+    images = glob.glob('*.jpg')
+
+    for fname in images:
+        img = cv2.imread(fname)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        # Find the chess board corners
+        ret, corners = cv2.findChessboardCorners(gray, (7, 6), None)
+
+        # If found, add object points, image points (after refining them)
+        if ret == True:
+            objpoints.append(objp)
+
+            corners2 = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
+            imgpoints.append(corners2)
+
+            # Draw and display the corners
+            img = cv2.drawChessboardCorners(img, (7, 6), corners2, ret)
+            cv2.imshow('img', img)
+            cv2.waitKey(500)
+# https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/py_calibration.html
+    cv2.destroyAllWindows()
 
 # ----------------------------------------------------
 
@@ -314,9 +364,53 @@ def coordinates_detector(frame, Ax, Bx, Ay,By):
 
     return Ay,Dy,By,Cy
 
+def styding_project(bright, brightHSV, brightYCB, brightLAB):
+    # python
+    bgr = [40, 158, 16]
+    thresh = 40
+
+    minBGR = np.array([bgr[0] - thresh, bgr[1] - thresh, bgr[2] - thresh])
+    maxBGR = np.array([bgr[0] + thresh, bgr[1] + thresh, bgr[2] + thresh])
+
+    maskBGR = cv2.inRange(bright, minBGR, maxBGR)
+    resultBGR = cv2.bitwise_and(bright, bright, mask=maskBGR)
+
+    # convert 1D array to 3D, then convert it to HSV and take the first element
+    # this will be same as shown in the above figure [65, 229, 158]
+    hsv = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2HSV)[0][0]
+
+    minHSV = np.array([hsv[0] - thresh, hsv[1] - thresh, hsv[2] - thresh])
+    maxHSV = np.array([hsv[0] + thresh, hsv[1] + thresh, hsv[2] + thresh])
+
+    maskHSV = cv2.inRange(brightHSV, minHSV, maxHSV)
+    resultHSV = cv2.bitwise_and(brightHSV, brightHSV, mask=maskHSV)
+
+    # convert 1D array to 3D, then convert it to YCrCb and take the first element
+    ycb = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2YCrCb)[0][0]
+
+    minYCB = np.array([ycb[0] - thresh, ycb[1] - thresh, ycb[2] - thresh])
+    maxYCB = np.array([ycb[0] + thresh, ycb[1] + thresh, ycb[2] + thresh])
+
+    maskYCB = cv2.inRange(brightYCB, minYCB, maxYCB)
+    resultYCB = cv2.bitwise_and(brightYCB, brightYCB, mask=maskYCB)
+
+    # convert 1D array to 3D, then convert it to LAB and take the first element
+    lab = cv2.cvtColor(np.uint8([[bgr]]), cv2.COLOR_BGR2LAB)[0][0]
+
+    minLAB = np.array([lab[0] - thresh, lab[1] - thresh, lab[2] - thresh])
+    maxLAB = np.array([lab[0] + thresh, lab[1] + thresh, lab[2] + thresh])
+
+    maskLAB = cv2.inRange(brightLAB, minLAB, maxLAB)
+    resultLAB = cv2.bitwise_and(brightLAB, brightLAB, mask=maskLAB)
+
+    cv2.imshow("Result BGR", resultBGR)
+    cv2.imshow("Result HSV", resultHSV)
+    cv2.imshow("Result YCB", resultYCB)
+    cv2.imshow("Output LAB", resultLAB)
+
 # ------------------------------------------------
 
-#HSV_color_filter_callibration(0)
+#hsv_color_filter_callibration(0)
 hsv_min = np.array((19, 0, 1), np.uint8)
 hsv_max = np.array((105, 255, 255), np.uint8)
 web_camera(0) #, hsv_min, hsv_max)
