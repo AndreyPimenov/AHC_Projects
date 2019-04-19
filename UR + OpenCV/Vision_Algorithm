@@ -1,0 +1,323 @@
+# http://robotclass.ru/tutorials/opencv-color-range-filter/
+# https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_gui/py_trackbar/py_trackbar.html
+# https://docs.opencv.org/3.4/da/d97/tutorial_threshold_inRange.html
+
+import os
+import cv2
+import numpy as np
+from matplotlib import pyplot as plt
+
+
+def nothing(x):
+    pass
+
+def HSV_color_filter_callibration(source):
+    cv2.namedWindow("result")  # creating main window
+    cv2.namedWindow("settings")  # for callibration
+
+    cap = cv2.VideoCapture(0)
+    # создаем 6 бегунков:
+    cv2.createTrackbar('h1', 'settings', 0, 255, nothing)
+    cv2.createTrackbar('s1', 'settings', 0, 255, nothing)
+    cv2.createTrackbar('v1', 'settings', 0, 255, nothing)
+    cv2.createTrackbar('h2', 'settings', 255, 255, nothing)
+    cv2.createTrackbar('s2', 'settings', 255, 255, nothing)
+    cv2.createTrackbar('v2', 'settings', 255, 255, nothing)
+    crange = [0, 0, 0, 0, 0, 0]
+
+    while True:
+        flag, img = cap.read()
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+        # считываем значения бегунков
+        h1 = cv2.getTrackbarPos('h1', 'settings')
+        s1 = cv2.getTrackbarPos('s1', 'settings')
+        v1 = cv2.getTrackbarPos('v1', 'settings')
+        h2 = cv2.getTrackbarPos('h2', 'settings')
+        s2 = cv2.getTrackbarPos('s2', 'settings')
+        v2 = cv2.getTrackbarPos('v2', 'settings')
+
+        # формируем начальный и конечный цвет фильтра
+        h_min = np.array((h1, s1, v1), np.uint8)
+        h_max = np.array((h2, s2, v2), np.uint8)
+
+        #  накладываем филтр на кадр в модели HSV
+        thresh = cv2.inRange(hsv, h_min, h_max)
+
+        cv2.imshow('result', thresh)
+
+        ch = cv2.waitKey(5)
+        if ch == 27:
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+def web_camera(source):  #, hsv_min, hsv_max):
+    cap = cv2.VideoCapture(source)
+    while True:
+        ret, frame = cap.read()
+        frame = frame[0:300, 200:400]
+
+        # It is useful to work with small areas:
+        top_frame = frame[30:50, 30:150]
+        bottom_frame = frame[230:250, 30:150]
+
+        # Blurring - it is need for reality
+        #blur_top_frame = cv2.GaussianBlur(top_frame, (7, 7), cv2.BORDER_DEFAULT)
+        #blur_bottom_frame = cv2.GaussianBlur(bottom_frame, (7, 7), cv2.BORDER_DEFAULT)
+
+        # Binarisation
+        #top_frame_new = cv2.adaptiveThreshold(blur_top_frame, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+        #bottom_frame_new = cv2.adaptiveThreshold(blur_bottom_frame, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+
+        # Change ColorSpace in small areas to HSV:
+        top_frame_HSV = cv2.cvtColor(top_frame, cv2.COLOR_BGR2HSV)
+        top_frame = cv2.inRange(top_frame_HSV, (19, 0, 1), (105, 255, 255))
+
+        bottom_frame_HSV = cv2.cvtColor(bottom_frame, cv2.COLOR_BGR2HSV)
+
+        
+
+        # Return these pieces to the main picture:
+        frame[30:50, 30:150] = top_frame
+        frame[230:250, 30:150] = bottom_frame_HSV
+
+        # frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        # kernel = np.ones((3, 3), np.float32) / 25
+        # dst = cv2.filter2D(frame2, -1, kernel)
+        cv2.imshow('frame', frame)
+        cv2.imwrite('frame_HSV.jpg', frame)
+
+        if cv2.waitKey(1) % 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+    return 0
+
+# ----------------------------------------------------
+
+def color_hist(img, nbins=256, bins_range=(0, 256)):
+    rh = np.histogram(img[:, :, 0], nbins, bins_range)
+    gh = np.histogram(img[:, :, 1], nbins, bins_range)
+    bh = np.histogram(img[:, :, 2], nbins, bins_range)
+
+    # Generating bin centers
+    bin_edges = rh[1] + gh[1] + bh[1]
+    bincen = (bin_edges[1:] + bin_edges[0:len(bin_edges) - 1]) / 6
+
+    feature_vec = np.concatenate((rh, gh, bh))
+
+    # Return the individual histograms, bin_centers and feature vector
+    return rh, gh, bh, bincen, feature_vec
+
+def Line_Boarder_Estimation(cadr):
+    # ROI
+    frame = cadr[160:480, 120:360]
+    cv2.imshow("ROI", frame)
+    #cv2.imwrite('ROI.png', frame)
+
+    # Blurring - it is need for reality
+    frame = cv2.GaussianBlur(frame, (5, 5), cv2.BORDER_DEFAULT)
+    #cv2.blur(frame,5)
+    # Binarisation
+
+    # Detecting the points
+    return frame
+
+def middle_line(Ax,Ay,Bx,By,Cx,Cy,Dx,Dy):
+    """
+    Идея моего алгоритма опирается на рассмотрение прямоугольника: ABCD
+    В каждом кадре:
+    A - левый верхний угол
+    B - правый верхний угол
+    C - правый нижний угол
+    D - левый нижний угол
+    :return:
+    Координыты точек E и F:
+    E - середина AD, F - середина BC
+    """
+    # general case:
+    if (Ax != Dx) and (Bx != Cx):
+        Ex = min(Ax, Dx) + abs(Dx - Ax) / 2  # потому, что наклон не предсказуем
+        Ey = Ay + ((Dy - Ay) / 2)
+        Fx = min(Bx, Cx) + abs(Bx - Cx) / 2  # потому, что наклон не предсказуем
+        Fy = By + ((Cy - By) / 2)
+        print("EF general case: ", Ex, Ey, Fx, Fy)
+
+    # left - equal  case:
+    elif (Ax == Dx) and (Bx != Cx):
+        Ex = Dx
+        Ey = Ay + ((Dy - Ay) / 2)
+        Fx = min(Bx, Cx) + abs(Bx - Cx) / 2  # потому, что наклон не предсказуем
+        Fy = By + ((Cy - By) / 2)
+        print("EF left-equal case: ", Ex, Ey, Fx, Fy)
+
+    # right - equal Case:
+    elif (Ax != Dx) and (Bx == Cx):
+        Ex = min(Ax, Dx) + abs(Dx - Ax) / 2  # потому, что наклон не предсказуем
+        Ey = Ay + ((Dy - Ay) / 2)
+        Fx = Cx
+        Fy = By + ((Cy - By) / 2)
+        print("EF right - equal case: ", Ex, Ey, Fx, Fy)
+
+    # ideal case:
+    elif (Ax == Dx) and (Bx == Cx):
+        Ex = Dx
+        Ey = Ay + ((Dy - Ay) / 2)
+        Fx = Cx
+        Fy = By + ((Cy - By) / 2)
+        print("EF ideal case: ", Ex, Ey, Fx, Fy)
+
+    # unreal case:
+    else:
+        print("EF Interesting Exception")
+        Ex, Ey, Fx, Fy = 1, 2, 3, 4
+    return int(Ex), int(Ey), int(Fx), int(Fy)
+
+def middle_line_vertical(Ax,Ay,Bx,By,Cx,Cy,Dx,Dy):
+    """
+    Координыты точек G и H:
+    G - середина AB, H - середина DC
+    От прошлой программы отличается тем, что:
+    все В и D меняю местами, а также меняю местами x и y
+    """
+    # general case:
+    if (Ay != By) and (Dy != Cy):
+        Gy = min(Ay, By) + abs(By - Ay) / 2  # потому, что наклон не предсказуем
+        Gx = Ax + ((Bx - Ax) / 2)            # потому что:  Bx > Ax
+        Hy = min(Dy, Cy) + abs(Dy - Cy) / 2  # потому, что наклон не предсказуем
+        Hx = Dx + ((Cx - Dx) / 2)            # потому что:  Cx > Dx
+        print("GH general case: ", Gx, Gy, Hx, Hy)
+
+    # Top - equal  case:
+    elif (Ay == By) and (Dy != Cy):
+        Gy = Ay
+        Gx = Ax + ((Bx - Ax) / 2)
+        Hy = min(Dy, Cy) + abs(Dy - Cy) / 2  # потому, что наклон не предсказуем
+        Hx = Dx + ((Cx - Dx) / 2)
+        print("GH left-equal case: ", Gx, Gy, Hy, Hx)
+
+    # Bottom - equal Case:
+    elif (Ay != By) and (Dy == Cy):
+        Gy = min(Ay, By) + abs(By - Ay) / 2  # потому, что наклон не предсказуем
+        Gx = Ax + ((Bx - Ax) / 2)
+        Hy = Cy
+        Hx = Dx + ((Cx - Dx) / 2)
+        print("GH right - equal case: ", Gx, Gy, Hx, Hy)
+
+    # ideal case:
+    elif (Ay == By) and (Dy == Cy):
+        Gy = By
+        Gx = Ax + ((Bx - Ax) / 2)
+        Hy = Dy
+        Hx = Dx + ((Cx - Dx) / 2)
+        print("GH ideal case: ", Gx, Gy, Hx, Hy)
+
+    # unreal case:
+    else:
+        print("GH Interesting Exception")
+        Gx, Gy, Hx, Hy = 1, 2, 3, 4
+    return int(Gx), int(Gy), int(Hx), int(Hy)
+
+def center_finding(Ex, Ey, Fx, Fy, Gx, Gy, Hx, Hy):
+    """
+    Solve this problem through common line equation
+    1. Write them for EF & GH
+    2. Express x through y from the EF
+    3. x = x, so equate left & right
+    4. find y
+    5. find x
+    :return: Ox, Oy
+    """
+    if (Fy == Ey):
+        Kfe = Fx - Ex
+    else:
+        Kfe = (Fx - Ex) / (Fy - Ey)
+
+    if (Hy == Gy):
+        Khg = Hx - Gx
+    else:
+        Khg = (Hx - Gx) / (Hy - Gy)
+
+    Oy = 1 / (Kfe - Khg) * (Ey*Kfe - Ex - Gy*Khg + Gx)
+
+    Ox = Oy * Kfe - Ey * Kfe + Ex
+
+    print(Ox, Oy)
+
+    return int(Ox), int(Oy)
+
+def coordinates_detector(frame, Ax, Bx, Ay,By):
+    """
+    Это упрощенный вариант функции, тем что по известным осям:
+    Ax = Dx и Bx = Cx мы ищем Аy, Dy, By, Cy
+    для этого составляем два списка значений пикселей вдоль оси Ax - Dx и вдоль оси Bx - Cx
+    затем для левого списка:
+    первое вхождение нуля - координата Ay
+    последнее вхождение нуля - координата Dy
+    для правого списка:
+    первое вхождение нуля - координата By
+    последнее вхождение нуля - координата Cy
+    :param frame:
+    :return: Ay, Dy, By, Cy
+    """
+    # Решение через списки:
+    left_list, right_list = list(), list()
+
+    # Решение через строки:
+    #left_list, right_list = str(), str()
+
+    # Далее для увеличения скорости работы - работать с массивами
+
+    for y in range(60, 200):
+        # Решение через списки:
+        left_list.append(frame[y, Ax])
+        right_list.append(frame[y, Bx])
+    Ay, Dy, By, Cy = 0, 0, 0, 0
+    for i in range(len(left_list) - 1):
+        if (left_list[i] == 0) and (left_list[i-1] == 0):
+            if Ay == 0:
+                Ay = i
+                i = i + 10
+            elif Ay != 0:
+                Dy = i
+
+    print('left_list: ', left_list)
+
+    for i in range(len(right_list) - 1):
+        if (right_list[i] == 0) and (right_list[i - 1] == 0):
+            if By == 0:
+                By = i
+                i = i + 10
+            elif By != 0:
+                Cy = i
+    print ('right_list: ', right_list)
+
+    Ay = 60 + Ay #int(left_list.find('0'))
+    Dy = 60 + Dy #int(left_list.rfind('0'))
+    By = 60 + By #int(right_list.find('0'))
+    Cy = 60 + Cy #int(right_list.rfind('0'))
+
+
+        # решение через строки:
+        #left_list = left_list + ' ' + str(frame[y, Ax])
+        #right_list = right_list + ' ' +str(frame[y,Bx])
+
+    #Ay = 60 + int(left_list.find('0') / 3)
+    #Dy = Ay + int(left_list.rfind('0') / 3)
+    #By = 60 + int(right_list.find('0') / 3)
+    #Cy = By + int(right_list.rfind('0') / 3)
+    #print(right_list)
+    print ('Ay,Dy,By,Cy: ', Ay,Dy,By,Cy )
+
+    return Ay,Dy,By,Cy
+
+# ------------------------------------------------
+
+#HSV_color_filter_callibration(0)
+hsv_min = np.array((19, 0, 1), np.uint8)
+hsv_max = np.array((105, 255, 255), np.uint8)
+web_camera(0) #, hsv_min, hsv_max)
+print('End')
