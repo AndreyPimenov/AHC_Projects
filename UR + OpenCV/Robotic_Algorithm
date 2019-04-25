@@ -1,0 +1,77 @@
+# MoveJ:
+#    home_position
+#    wait EN1_signal
+#    point_1
+#    wait EN2_signal
+# MoveL:
+#    point_2
+#    pneumatic_on
+#    wait 0.5s
+#    point_3
+# While(angle_er == 0):
+#    change_angle(angle_er)
+#    wait EN3_signal
+# While (distance_er == 0):
+#    change_distance(distance_er)
+#    wait EN4_signal
+# Wait EN5_signal
+#    pneumo_off
+# MoveL:
+#    point 4
+#    nlist = nlist + 1
+#    if (nlist % 44 == 0):
+#        point_2(z) +=1
+# MoveJ:
+#    home_position
+
+# --------------------------
+# Import Library Block:
+import socket
+import time
+import urx
+
+# Connection to the Robot:
+HOST = "10.0.0.2"  # The remote host
+PORT = 30002  # The same port as used by the server
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect((HOST, PORT))
+
+RoboticArm_Algorithm = """
+home_position = p[125, 125, 125, 0.0, 0.0, 0.0]\n
+point_1 = p[25, 125, 100, 0.0, 0.0, 0.0]\n
+point_2 = p[25, 125, 10, 0.0, 0.0, 0.0]\n
+point_3 = p[605, 125, 10, 0.0, 0.0, 0.0]\n
+point_4 = p[605, 125, 100, 0.0, 0.0, 0.0]\n
+angle_er = get_analog_in(1)\n
+distance_er = get_analog_in(2)\n
+nlist = 0\n
+def change_angle(angle):\n
+rotate
+
+def change_distance(distance):\n
+movel
+
+movej(home_position, 1.4, 1.05, 0, 0)\n
+wait (get_digital_in(1) == True)\n
+movej(point_1, 1.4, 1.05, 0, 0)\n
+wait (get_digital_in(2) == True)\n
+movel(point_2, 1, 0, 0)\n
+set_digital_in(6) = True\n
+wait(0.5s)\n
+movel(point_3, 1, 0, 0)\n
+while (angle_er == 0):\n
+change_angle(angle_er)\n
+wait (get_digital_in(3) == True\n
+while (distance_er == 0):\n
+change_distance(distance_er)\n
+wait (get_digital_in(4) == True)\n
+wait (get_digital_in(5) == True)\n
+set_digital_in(6) = False\n
+movel(point_4, 1, 0, 0)\n
+nlist = nlist + 1\n
+if (nlist % 44 == 0):\n
+point_2 = point_2(z) + 1\n
+point_3 = point_3(z) + 1\n
+movej(home_position, 1.4, 1.05, 0, 0)\n
+end()\n
+"""
