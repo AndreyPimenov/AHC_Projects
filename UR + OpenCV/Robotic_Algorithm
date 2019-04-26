@@ -75,3 +75,15 @@ point_3 = point_3(z) + 1\n
 movej(home_position, 1.4, 1.05, 0, 0)\n
 end()\n
 """
+
+
+"""
+while True 
+    if not OK
+    speedJ([0,0,0,0,0,v],@,t=10), where: v- flange, @ - rad/s
+    else
+    stopj(1)
+    
+    speedL([x,y,z,Rx,Ry,Rz], a), where a - m/s^2
+    stopl() 
+"""
