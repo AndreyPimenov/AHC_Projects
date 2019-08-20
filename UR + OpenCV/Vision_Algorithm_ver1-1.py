@@ -1,7 +1,11 @@
-# http://robotclass.ru/tutorials/opencv-color-range-filter/
-# https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_gui/py_trackbar/py_trackbar.html
-# https://docs.opencv.org/3.4/da/d97/tutorial_threshold_inRange.html
-# http://robotclass.ru/tutorials/opencv-moments-color-object-search/
+# CV_Algorithm:
+# 0. Installed camera drivers, set up camera in the right position, get 10 pics - DONE
+# 1. Подготовительное преобразование изображения в сканирующих окнах - DONE
+# 2. Формирование полигонов и нахождение центральных точек этих полигонов: A,B,C,D
+# 3. В построенном ABCD: решить задачу нахождения угла поворота
+# 4. В построенном ABCD: решить задачу нахождения линейного смещения
+# 5. В случае AB: решить задачу нахождения угла поворота
+# 6. В случае AB: решить задачу нахождения линейного смещения
 
 import os
 import cv2
@@ -9,142 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-def nothing(x):
-    pass
-
-def hsv_color_filter_callibration(source):
-    cv2.namedWindow("result")  # creating main window
-    cv2.namedWindow("settings")  # for callibration
-
-    cap = cv2.VideoCapture(source)
-    # создаем 6 бегунков:
-    cv2.createTrackbar('h1', 'settings', 0, 255, nothing)
-    cv2.createTrackbar('s1', 'settings', 0, 255, nothing)
-    cv2.createTrackbar('v1', 'settings', 0, 255, nothing)
-    cv2.createTrackbar('h2', 'settings', 255, 255, nothing)
-    cv2.createTrackbar('s2', 'settings', 255, 255, nothing)
-    cv2.createTrackbar('v2', 'settings', 255, 255, nothing)
-    crange = [0, 0, 0, 0, 0, 0]
-
-    while True:
-        flag, img = cap.read(source)
-        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-        # считываем значения бегунков
-        h1 = cv2.getTrackbarPos('h1', 'settings')
-        s1 = cv2.getTrackbarPos('s1', 'settings')
-        v1 = cv2.getTrackbarPos('v1', 'settings')
-        h2 = cv2.getTrackbarPos('h2', 'settings')
-        s2 = cv2.getTrackbarPos('s2', 'settings')
-        v2 = cv2.getTrackbarPos('v2', 'settings')
-
-        # формируем начальный и конечный цвет фильтра
-        h_min = np.array((h1, s1, v1), np.uint8)
-        h_max = np.array((h2, s2, v2), np.uint8)
-
-        #  накладываем филтр на кадр в модели HSV
-        thresh = cv2.inRange(hsv, h_min, h_max)
-
-        cv2.imshow('result', thresh)
-
-        ch = cv2.waitKey(5)
-        if ch == 27:
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-def web_camera(source):  #, hsv_min, hsv_max):
-    cap = cv2.VideoCapture(source)
-    while True:
-        ret, frame = cap.read(source)
-        #frame = frame[0:300, 200:400]
-        frame = frame[0:250, 200:400]
-
-        # It is useful to work with small areas:
-        top_frame = frame[30:50, 30:150]
-        bottom_frame = frame[200:220, 30:150]
-        print('top_frame: ', np.shape(top_frame))
-
-        # Blurring - it is need for reality
-        top_frame_blur = cv2.GaussianBlur(top_frame, (7, 7), cv2.BORDER_DEFAULT)
-        bottom_frame_blur = cv2.GaussianBlur(bottom_frame, (7, 7), cv2.BORDER_DEFAULT)
-        print('top_frame_blur: ', np.shape(top_frame_blur))
-
-        # Change ColorSpace in small areas to HSV:
-        top_frame_hsv = cv2.cvtColor(top_frame_blur, cv2.COLOR_BGR2HSV)
-        bottom_frame_hsv = cv2.cvtColor(bottom_frame_blur, cv2.COLOR_BGR2HSV)
-        print('top_frame_hsv: ', np.shape(top_frame_hsv))
-
-        # Create Mask, based on pre-calculation:
-        top_frame_mask = cv2.inRange(top_frame_hsv, (21, 1, 5), (105, 255, 255))
-        bottom_frame_mask = cv2.inRange(bottom_frame_hsv, (21, 1, 5), (105, 255, 255))
-        print('top_frame_mask: ', np.shape(top_frame_mask))
-
-        # Putting mask on the Image:
-        top_frame_result = cv2.bitwise_and(top_frame_hsv, top_frame_hsv, mask=top_frame_mask)
-        bottom_frame_result = cv2.bitwise_and(bottom_frame_hsv, bottom_frame_hsv, mask=bottom_frame_mask)
-        print('top_frame_results: ', np.shape(top_frame_result))
-
-        # Binarisation
-        #top_frame_bin = cv2.adaptiveThreshold(top_frame_result, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-        #bottom_frame_bin = cv2.adaptiveThreshold(bottom_frame_result, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-
-        # Return these pieces to the main picture:
-        top_frame = top_frame_result
-        bottom_frame = bottom_frame_result
-        frame[30:50, 30:150] = top_frame
-        frame[200:220, 30:150] = bottom_frame
-
-        # frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        # kernel = np.ones((3, 3), np.float32) / 25
-        # dst = cv2.filter2D(frame2, -1, kernel)
-
-        cv2.imshow('frame', frame)
-        cv2.imwrite('Line_Detected.jpg', frame)
-
-        if cv2.waitKey(1) % 0xFF == ord('q'):
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-    return 0
-
-# Camera_callibration(
-def camera_callibration():
-    # termination criteria
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-
-    # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-    objp = np.zeros((6 * 7, 3), np.float32)
-    objp[:, :2] = np.mgrid[0:7, 0:6].T.reshape(-1, 2)
-
-    # Arrays to store object points and image points from all the images.
-    objpoints = []  # 3d point in real world space
-    imgpoints = []  # 2d points in image plane.
-
-    #images = glob.glob('*.jpg')
-
-    #for fname in images:
-    #    img = cv2.imread(fname)
-    #    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-        # Find the chess board corners
-    #    ret, corners = cv2.findChessboardCorners(gray, (7, 6), None)
-
-        # If found, add object points, image points (after refining them)
-     #   if ret == True:
-     #       objpoints.append(objp)
-
-      #      corners2 = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
-      #      imgpoints.append(corners2)
-
-            # Draw and display the corners
-       #     img = cv2.drawChessboardCorners(img, (7, 6), corners2, ret)
-       #     cv2.imshow('img', img)
-       #     cv2.waitKey(500)
-# https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/py_calibration.html
-    cv2.destroyAllWindows()
+# Step 0:
 
 def getpicture(source):
     cv2.namedWindow("picture_cam")  # creating main window
@@ -169,9 +38,191 @@ def getpicture(source):
     camera_cap.release()
     cv2.destroyAllWindows()
 
+# Step 1:
+
+def nothing(x):
+    pass
+
+def hsv_color_filter_callibration(source):
+    '''
+    Эта функция нужна для ручной настройки параметров фильтра
+    :param source:
+    выбор источника с которым работает функция, обычно это номер камеры:
+    0 - устанволенная в ноутбук
+    1 - внешняя веб-камера по USB
+    2 - вторая внешняя по USB (если подключено больше одной веб - камеры)
+    3 - третья внешняя по USB (если подключено больше двух веб - камер)
+    8 - происходит работа с изображением, которое по умолчанию сохранено:
+        как 'Line_Detected_CAM.jpg' в основной папке проекта
+    :return:
+    Возвращает значение коэффициентов фильтра:
+    h_min = np.array((h1, s1, v1), np.uint8)
+    h_max = np.array((h2, s2, v2), np.uint8)
+
+    Которые могут использоваться в дальнейшем для формировании маски
+
+    '''
+    cv2.namedWindow('result')  # creating main window
+    cv2.namedWindow('settings')  # for callibration
+
+    if source == 8:
+        cap = cv2.imread('Line_Detected_CAM.jpg')
+    else:
+        cap = cv2.VideoCapture(source)
+    # создаем 6 бегунков:
+    cv2.createTrackbar('h1', 'settings', 0, 255, nothing)
+    cv2.createTrackbar('s1', 'settings', 0, 255, nothing)
+    cv2.createTrackbar('v1', 'settings', 0, 255, nothing)
+    cv2.createTrackbar('h2', 'settings', 255, 255, nothing)
+    cv2.createTrackbar('s2', 'settings', 255, 255, nothing)
+    cv2.createTrackbar('v2', 'settings', 255, 255, nothing)
+    crange = [0, 0, 0, 0, 0, 0]
+
+    while True:
+        if source == 8:
+            hsv = cv2.cvtColor(cap, cv2.COLOR_BGR2HSV)
+        else:
+            flag, img = cap.read(source)
+            hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
 
-# -----------------------------------------------------
+        # считываем значения бегунков
+        h1 = cv2.getTrackbarPos('h1', 'settings')
+        s1 = cv2.getTrackbarPos('s1', 'settings')
+        v1 = cv2.getTrackbarPos('v1', 'settings')
+        h2 = cv2.getTrackbarPos('h2', 'settings')
+        s2 = cv2.getTrackbarPos('s2', 'settings')
+        v2 = cv2.getTrackbarPos('v2', 'settings')
+
+        # формируем начальный и конечный цвет фильтра
+        h_min = np.array((h1, s1, v1), np.uint8)
+        h_max = np.array((h2, s2, v2), np.uint8)
+
+        #  накладываем фильтр на кадр в модели HSV
+        thresh = cv2.inRange(hsv, h_min, h_max)
+
+        cv2.imshow('result', thresh)
+
+        ch = cv2.waitKey(5)
+        if ch == 27:
+            break
+
+    if source == 8:
+        cv2.destroyAllWindows()
+        return h_min, h_max
+    else:
+        cap.release()
+        cv2.destroyAllWindows()
+        return h_min, h_max
+
+def img_preparation(source, hsv_min, hsv_max, output_parametr):
+    '''
+    Эта функция формирует скнаирующие окна и подгатавливает изображения в них
+    :param source: (то же что и для hsv_color_filter_callibration()
+    выбор источника с которым работает функция, обычно это номер камеры:
+    0 - устанволенная в ноутбук
+    1 - внешняя веб-камера по USB
+    2 - вторая внешняя по USB (если подключено больше одной веб - камеры)
+    3 - третья внешняя по USB (если подключено больше двух веб - камер)
+    8 - происходит работа с изображением, которое по умолчанию сохранено:
+        как 'Line_Detected_CAM.jpg' в основной папке проекта
+    :param hsv_min: матрица параметров фильтра: h1, s1, v1
+    :param hsv_max: матрица параметров фильтра: h2, s2, v3
+    :param output_parametr: Параметр настройки выхода функции:
+    0 - на выходе формируется только массив(MAT), который можно далее использовать для анализа
+    1 - сохраняется изображение в папка проекта: 'IMG_Prepare.jpg'
+
+    :return: Зависит от output_parametr
+    0 - Только матрица
+    1 - Только картинка с подготовленными к дальнейшему анализу сканирующими окнами
+    '''
+
+    if source == 8:
+        cap = cv2.imread('Line_Detected_CAM.jpg')
+    else:
+        cap = cv2.VideoCapture(source)
+
+    while True:
+        if source == 8:
+            base_frame = cap
+        else:
+            ret, base_frame = cap.read(source)
+
+        frame = base_frame[30:150, 220:380]
+        # It is useful for calculations to work with small areas:
+        top_frame = frame[30:60, 0:150]
+        bottom_frame = frame[90:120, 0:150]
+        #print('top_frame: ', np.shape(top_frame))
+
+        # Blurring - it is need for reality
+        # NB:  cv2.BORDER_DEFAULT vs cv2.BORDER_CONSTANT
+        top_frame_blur = cv2.GaussianBlur(top_frame, (1, 5), cv2.BORDER_CONSTANT)
+        bottom_frame_blur = cv2.GaussianBlur(bottom_frame, (1, 5), cv2.BORDER_CONSTANT)
+        #print('top_frame_blur: ', np.shape(top_frame_blur))
+
+        # Change ColorSpace in small areas to HSV:
+        top_frame_hsv = cv2.cvtColor(top_frame_blur, cv2.COLOR_BGR2HSV)
+        bottom_frame_hsv = cv2.cvtColor(bottom_frame_blur, cv2.COLOR_RGB2HSV)
+        #print('top_frame_hsv: ', np.shape(top_frame_hsv))
+
+        # Create Mask, based on pre-calculation:
+        top_frame_mask = cv2.inRange(top_frame_hsv, hsv_min, hsv_max)
+        bottom_frame_mask = cv2.inRange(bottom_frame_hsv, hsv_min, hsv_max)
+        #print('top_frame_mask: ', np.shape(top_frame_mask))
+
+        # Putting mask on the Image:
+        top_frame_result = cv2.bitwise_and(top_frame_hsv, top_frame_hsv, mask=top_frame_mask)
+        bottom_frame_result = cv2.bitwise_and(bottom_frame_hsv, bottom_frame_hsv, mask=bottom_frame_mask)
+        #print('top_frame_results: ', np.shape(top_frame_result))
+
+        # Binarisation
+        #top_frame_bin = cv2.adaptiveThreshold(top_frame_result, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+        #bottom_frame_bin = cv2.adaptiveThreshold(bottom_frame_result, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+        #print('top_frame_bin: ', np.shape(top_frame_bin))
+
+        # Return these pieces to the main picture:
+        # ----------------------------------------
+        # here is the changeable code:
+        top_frame = top_frame_result
+        bottom_frame = bottom_frame_result
+        frame[30:60, 0:150] = top_frame
+        frame[90:120, 0:150] = bottom_frame
+
+        # frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        # kernel = np.ones((3, 3), np.float32) / 25
+        # dst = cv2.filter2D(frame2, -1, kernel)
+
+        # Output_parametr:
+        if output_parametr == 0:
+                cap.release()
+                cv2.destroyAllWindows()
+                return frame
+
+        else:
+            base_frame[30:150, 220:380] = frame
+
+        cv2.imshow('base_frame', base_frame)
+        cv2.imwrite('Line_Detected.jpg', base_frame)
+
+        if cv2.waitKey(1) % 0xFF == ord('q'):
+            break
+
+    if source == 8:
+        cv2.destroyAllWindows()
+
+    else:
+        cap.release()
+        cv2.destroyAllWindows()
+    return 0
+
+# Step 2:
+
+
+
+
+
+
+# --------Previous Algorithm (Denmark and few weeks after)
 
 def color_hist(img, nbins=256, bins_range=(0, 256)):
     rh = np.histogram(img[:, :, 0], nbins, bins_range)
@@ -439,7 +490,7 @@ def finding_centres():
     nframe = cv2.imread('Line_Detected.jpg')
     nframe = cv2.cvtColor(nframe, cv2.COLOR_BGR2RGB)
 
-    top_frame = nframe[30:50, 30:150]
+    #top_frame = nframe[30:50, 30:150]
     #bottom_frame = nframe[200:220, 30:150]
     #print('TOP: ', top_frame)
     #print('BOTTOM: ', bottom_frame)
@@ -447,55 +498,33 @@ def finding_centres():
     plt.imshow(nframe)
     plt.show()
 
-    print(top_frame)
+    #print(top_frame)
 
 
-def matplotlib_buttons():
-    import numpy as np
-    import matplotlib.pyplot as plt
-    from matplotlib.widgets import Button
 
-    freqs = np.arange(2, 20, 3)
 
-    fig, ax = plt.subplots()
-    plt.subplots_adjust(bottom=0.2)
-    t = np.arange(0.0, 1.0, 0.001)
-    s = np.sin(2 * np.pi * freqs[0] * t)
-    l, = plt.plot(t, s, lw=2)
+#--------------------------------------------------------
+# Main code here:
 
-    class Index(object):
-        ind = 0
+# step 0:
+# getpicture(1)
 
-        def next(self, event):
-            self.ind += 1
-            i = self.ind % len(freqs)
-            ydata = np.sin(2 * np.pi * freqs[i] * t)
-            l.set_ydata(ydata)
-            plt.draw()
+# step1:
+# настроили фильтр: (0,19,84) (255,62,227)
+# получили изображение LineDetected.jpg
+# hsv_min, hsv_max = hsv_color_filter_callibration(8) #8 - picture
+# print(hsv_min, hsv_max)
+# img_preparation(8, hsv_min, hsv_max, 1) #8 -picture
 
-        def prev(self, event):
-            self.ind -= 1
-            i = self.ind % len(freqs)
-            ydata = np.sin(2 * np.pi * freqs[i] * t)
-            l.set_ydata(ydata)
-            plt.draw()
+# step 2:
+# Работаем с LineDetected.jpg
 
-    callback = Index()
-    axprev = plt.axes([0.7, 0.05, 0.1, 0.075])
-    axnext = plt.axes([0.81, 0.05, 0.1, 0.075])
-    bnext = Button(axnext, 'Next')
-    bnext.on_clicked(callback.next)
-    bprev = Button(axprev, 'Previous')
-    bprev.on_clicked(callback.prev)
+# step 3:
 
-    plt.show()
+# step 4:
 
-#  hsv_color_filter_callibration(1)
-#  hsv_min = np.array((19, 0, 1), np.uint8)
-#  hsv_max = np.array((105, 255, 255), np.uint8)
-#  web_camera(1) #( hsv_min, hsv_max)
-#  finding_centres()
-#  matplotlib_buttons()
-getpicture(1)
+
+# Control Step:
+finding_centres()
 
 print('End')
