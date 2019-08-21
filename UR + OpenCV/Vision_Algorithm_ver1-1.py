@@ -38,6 +38,12 @@ def getpicture(source):
     camera_cap.release()
     cv2.destroyAllWindows()
 
+def plot_pixel_analyzer():
+    nframe = cv2.imread('Line_Detected.jpg')
+    nframe = cv2.cvtColor(nframe, cv2.COLOR_BGR2RGB)
+    plt.imshow(nframe)
+    plt.show()
+
 # Step 1:
 
 def nothing(x):
@@ -217,8 +223,25 @@ def img_preparation(source, hsv_min, hsv_max, output_parametr):
 
 # Step 2:
 
+def ABCD_calculation():
+    top_matrix = np.zeros((30, 150))
+    bottom_matrix = np.zeros((30, 150))
 
+    # Запишем значения нулевых матриц в файл
 
+    # Запишем значения пикселей верхней матрицы в txt файл
+
+    # Запишем значения пикселей нижней матрицы в txt файл
+
+    # Пройдемся по значениям пикселей верхней матрицы:
+    # Если не 0, то 1
+
+    # Пройдемся по значениям пикселей нижней матрицы
+    # Если не 0, то 1
+
+    #
+
+    print (top_matrix, bottom_matrix)
 
 
 
@@ -486,24 +509,7 @@ def styding_project(bright, brightHSV, brightYCB, brightLAB):
 
 # -----------------------------------------------------
 
-def finding_centres():
-    nframe = cv2.imread('Line_Detected.jpg')
-    nframe = cv2.cvtColor(nframe, cv2.COLOR_BGR2RGB)
 
-    #top_frame = nframe[30:50, 30:150]
-    #bottom_frame = nframe[200:220, 30:150]
-    #print('TOP: ', top_frame)
-    #print('BOTTOM: ', bottom_frame)
-
-    plt.imshow(nframe)
-    plt.show()
-
-    #print(top_frame)
-
-
-
-
-#--------------------------------------------------------
 # Main code here:
 
 # step 0:
@@ -518,6 +524,7 @@ def finding_centres():
 
 # step 2:
 # Работаем с LineDetected.jpg
+ABCD_calculation()
 
 # step 3:
 
@@ -525,6 +532,11 @@ def finding_centres():
 
 
 # Control Step:
-finding_centres()
+# plot_pixel_analyzer()
+
+
+
+
+
 
 print('End')
