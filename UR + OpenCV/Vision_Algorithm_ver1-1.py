@@ -12,6 +12,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import math
 
 # Step 0:
 
@@ -249,6 +250,8 @@ def ABCD_calculation():
 
     :return:
     Возвращает координаты центров полигонов: A,B,C,D
+
+    Так получилось, что это EF - calculation
     '''
 
     A,B,C,D = [0,0], [0,0], [0,0], [0,0]
@@ -271,7 +274,7 @@ def ABCD_calculation():
 
         if j_aver_top != 0:
             pixel_top.append(j_aver_top)
-            img_work[i, j_aver_top] = 255
+            #img_work[i, j_aver_top] = 255
     #print(pixel_top)
 
     print("There is a bottom matrix: \n")
@@ -288,27 +291,40 @@ def ABCD_calculation():
 
         if j_aver_bottom != 0:
             pixel_bottom.append(j_aver_bottom)
-            img_work[i, j_aver_bottom] = 255
+            #img_work[i, j_aver_bottom] = 255
     #print(pixel_bottom)
-
-    # Применив метод (Выбрать: k-средних или главных компонент) к каждому списку,
-    # получу координату точки пересечения со средней линией каждой области
-    # Тем самым я решу задачу через E и F
-    # Что возможно изменит мое представление о решении задачи непременно через ABCD
 
     # для pixel_top:
     Ex = 0
     for i in range (0, len(pixel_top), 1):
         Ex = Ex + pixel_top[i]
-    Ex = Ex / 30
+    Ex = int(Ex / 30)
     print (Ex)
+    Ey = 75
 
     # для pixel_bottom:
     Fx = 0
     for i in range(0, len(pixel_bottom), 1):
         Fx = Fx + pixel_bottom[i]
-    Fx = Fx / 30
+    Fx = int(Fx / 30)
     print(Fx)
+    Fy = 135
+
+    img_work[Ey, Ex] = 125
+    img_work[Fy, Fx] = 125
+
+    # Этот код потом вынесу в отдельную функцию:
+
+    # Step 3 нахождение угла:
+    H = Fy - Ey # 135 - 75 = 60
+    EF = math.sqrt((Fx-Fy)+H^2)
+    alfa = 90 - math.acos(EF/H)
+    print(alfa)
+
+    # Step 4 нахождение смещения:
+
+
+
 
     cv2.imwrite('New_One.jpg', img_work)
 
@@ -316,9 +332,7 @@ def ABCD_calculation():
     plt.imshow(img_work)
     plt.show()
 
-
-
-
+    return (Ey, Ex, Fy, Fx)
 
 
 # --------Previous Algorithm (Denmark and few weeks after)
