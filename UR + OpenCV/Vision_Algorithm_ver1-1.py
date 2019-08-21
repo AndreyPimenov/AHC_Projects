@@ -224,24 +224,100 @@ def img_preparation(source, hsv_min, hsv_max, output_parametr):
 # Step 2:
 
 def ABCD_calculation():
-    top_matrix = np.zeros((30, 150))
-    bottom_matrix = np.zeros((30, 150))
+    '''
+    Эта функция находит центры полигонов, это точки: A,B,C,D
+    На данном этапе вижу три способа решения данной задачи:
+    а) Разбить на прямоугольник и две криволинейные трапеции:
+       Левую и Правую. Через двойные интегралы (для каждой трапеции)
+       и пересечения диаганолей найти центр масс полигона.
+       Прогнав эту операцию 4 раза найдем искомые точки.
+       Проблема: не знаю как описать уравнения кривых для трапеций
 
-    # Запишем значения нулевых матриц в файл
+    б) Работа с псевдоматрицами.
+       Создать две нулевые матрицы (идентичные областям анализа по кол-ву элементов)
+       top_matrix = np.zeros((30, 150))
+       bottom_matrix = np.zeros((30, 150))
+       Переобозначим элементы этих матриц, которым соответвуют ненулевые пиксели,
+       с нуля на единицы. Таким образом получим матрицы, которые описывают кадр.
+       Используя матричные методы найти центры масс этих матриц
+       Проблема: не знаю матричные методы нахождения такого центра
 
-    # Запишем значения пикселей верхней матрицы в txt файл
+    в) Прогон в циклах.
+       Пройтись циклом от 30 до 60 и найти средние точки в каждом ряду
+       Выделить их белым цветом [255, 255, 255]
+       Далее работать с полученным списком
 
-    # Запишем значения пикселей нижней матрицы в txt файл
+    :return:
+    Возвращает координаты центров полигонов: A,B,C,D
+    '''
 
-    # Пройдемся по значениям пикселей верхней матрицы:
-    # Если не 0, то 1
+    A,B,C,D = [0,0], [0,0], [0,0], [0,0]
+    img_base = cv2.imread('Line_Detected.jpg')
+    img_work = cv2.cvtColor(img_base, cv2.COLOR_BGR2GRAY)
+    pixel_top = []
+    pixel_bottom = []
+    j_aver_top = 0
+    j_aver_bottom = 0
 
-    # Пройдемся по значениям пикселей нижней матрицы
-    # Если не 0, то 1
+    # матрица верхнего окна:
+    for i in range (60, 90, 1):
+        Sum = 0
+        Del = 0
+        for j in range (220, 370, 1):
+            if img_work[i,j] >= 10:
+                Sum = Sum + j
+                Del +=1
+                j_aver_top = int(Sum / Del)
 
-    #
+        if j_aver_top != 0:
+            pixel_top.append(j_aver_top)
+            img_work[i, j_aver_top] = 255
+    #print(pixel_top)
 
-    print (top_matrix, bottom_matrix)
+    print("There is a bottom matrix: \n")
+
+    # матрица нижнего окна:
+    for i in range(120, 150, 1):
+        Sum = 0
+        Del = 0
+        for j in range(220, 370, 1):
+            if img_work[i, j] >= 10:
+                Sum = Sum + j
+                Del += 1
+                j_aver_bottom = int(Sum / Del)
+
+        if j_aver_bottom != 0:
+            pixel_bottom.append(j_aver_bottom)
+            img_work[i, j_aver_bottom] = 255
+    #print(pixel_bottom)
+
+    # Применив метод (Выбрать: k-средних или главных компонент) к каждому списку,
+    # получу координату точки пересечения со средней линией каждой области
+    # Тем самым я решу задачу через E и F
+    # Что возможно изменит мое представление о решении задачи непременно через ABCD
+
+    # для pixel_top:
+    Ex = 0
+    for i in range (0, len(pixel_top), 1):
+        Ex = Ex + pixel_top[i]
+    Ex = Ex / 30
+    print (Ex)
+
+    # для pixel_bottom:
+    Fx = 0
+    for i in range(0, len(pixel_bottom), 1):
+        Fx = Fx + pixel_bottom[i]
+    Fx = Fx / 30
+    print(Fx)
+
+    cv2.imwrite('New_One.jpg', img_work)
+
+    print(A,B,C,D)
+    plt.imshow(img_work)
+    plt.show()
+
+
+
 
 
 
@@ -528,11 +604,65 @@ ABCD_calculation()
 
 # step 3:
 
+def angle():
+    # https://xn--90aeniddllys.xn--p1ai/opencv-mashinnoe-zrenie-na-python-pryamougolnye-obekty-chast-3/
+    import numpy as np
+    import cv2 as cv
+    import math
+
+    hsv_min = np.array((86, 11, 0), np.uint8)
+    hsv_max = np.array((132, 255, 255), np.uint8)
+
+    color_blue = (255, 0, 0)
+    color_yellow = (0, 255, 255)
+
+    if __name__ == '__main__':
+        fn = '34562.jpg'  # имя файла, который будем анализировать
+        img = cv.imread(fn)
+
+        hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)  # меняем цветовую модель с BGR на HSV
+        thresh = cv.inRange(hsv, hsv_min, hsv_max)  # применяем цветовой фильтр
+        contours0, hierarchy = cv.findContours(thresh.copy(), cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+        # перебираем все найденные контуры в цикле
+        for cnt in contours0:
+            rect = cv.minAreaRect(cnt)  # пытаемся вписать прямоугольник
+            box = cv.boxPoints(rect)  # поиск четырех вершин прямоугольника
+            box = np.int0(box)  # округление координат
+            center = (int(rect[0][0]), int(rect[0][1]))
+            area = int(rect[1][0] * rect[1][1])  # вычисление площади
+
+            # вычисление координат двух векторов, являющихся сторонам прямоугольника
+            edge1 = np.int0((box[1][0] - box[0][0], box[1][1] - box[0][1]))
+            edge2 = np.int0((box[2][0] - box[1][0], box[2][1] - box[1][1]))
+
+            # выясняем какой вектор больше
+            usedEdge = edge1
+            if cv.norm(edge2) > cv.norm(edge1):
+                usedEdge = edge2
+            reference = (1, 0)  # горизонтальный вектор, задающий горизонт
+
+            # вычисляем угол между самой длинной стороной прямоугольника и горизонтом
+            angle = 180.0 / math.pi * math.acos(
+                (reference[0] * usedEdge[0] + reference[1] * usedEdge[1]) / (cv.norm(reference) * cv.norm(usedEdge)))
+
+            if area > 100:
+                cv.drawContours(img, [box], 0, (255, 0, 0), 2)  # рисуем прямоугольник
+                cv.circle(img, center, 5, color_yellow, 2)  # рисуем маленький кружок в центре прямоугольника
+                # выводим в кадр величину угла наклона
+                cv.putText(img, "%d" % int(angle), (center[0] + 20, center[1] - 20), cv.FONT_HERSHEY_SIMPLEX, 1,
+                           color_yellow, 2)
+
+        cv.imshow('contours', img)
+        cv.waitKey()
+        cv.destroyAllWindows()
+
 # step 4:
 
 
 # Control Step:
 # plot_pixel_analyzer()
+
 
 
 
