@@ -1,0 +1,95 @@
+import urx
+import math3d as m3d    #the library, used by urx to represent transform
+
+robot = urx.Robot("10.0.0.2", use_rt=True)
+
+robot.set_digital_out(0, True)
+robot.set_digital_out(0, False)
+robot.get_pos() #let's get robot's tool tip position (x,y,z)
+
+help(robot) #Let's list all URX functions
+
+
+# 1. Joints angles
+robot.getj() # get joints angles in Radians
+
+# 2. Classic Transform
+robot.get_pose() #get transform from current coord system to tcp
+robot.get_pos() #get tool position (x,y,z) in current coord system
+robot.get_orientation() #get tool orientation (Rotation Matrix) in current coordinate system
+
+# 3.Axis-angle
+robot.getl() #return current pose (x,y,z,Rx,Ry,Rz) from tcp to current csys
+
+# 4. XYZ
+robot.x #return current x coordinate
+robot.y
+robot.z
+
+# 5. Coordinates Conversation
+axis_angle = robot.getl()
+transform = m3d.Transfrom(axis_angle)
+transform
+
+# and vice - verse:
+transform.pose_vector
+
+# 6. Coordinates calculation
+def calc_tool_translate(pose, vect):
+    p = m3d.Transform(pose)
+    t = m3d.Transform()
+    t.pos += vect
+    new_transform = p * t
+    return new_transform.pose_vector
+
+calc_tool_translate(robot.getl(), [0,0,0.1])
+
+# Movement
+# 1. Simple Move functions
+robot.up(z = 0.05, acc = 0.01, vel = 0.01) #move up along csys z-axis
+robot.down(z = 0.05, acc = 0.01, vel = 0.01) #move down along csys z-axis
+robot.back(z = 0.05, acc = 0.01, vel = 0.01) #move along tool z-axis
+
+# Move robot in current coord sys without changing orientation
+robot.translate((0.05, 0, 0.03), acc = 0.05, vel = 0.05)
+
+# Move robot in TOOL coord sys without changing orientation
+robot.translate_tool((0, 0, 0.83), acc = 0.05, vel = 0.05)
+
+# 2. Joint space
+joints = robot.getj() #get current joints angles
+joints[5] -= 0.5 # add 0.5 radian (30 degrees) to the last joint (wirst3)
+robot.movej(joints, acc=0.2, vel=0.2)
+
+# 3. Transformation
+trans = robot.get_pose() # get current transformation matrix (tool to base)
+trans.pos.z += 0.3
+trans.orient.rotate_yb(pi/2)
+robot.set_pose(trans, acc=0.5, vel=0.2) #apply the new pose
+
+# or only work with orientation part
+o = robot.get_orientation()
+o.rotate_yb(np.pi)
+robot.set_orientation(o)
+
+# Add transform expressed in base coordinate or the same
+# in tool coordinte sys - *get_pose()
+robot.add_pose_base(trans, acc=0.01, vel=0.01)
+
+# Axis-Angle
+# Linear Movement
+pose = robot.getl()
+pose[2] += 0.03
+robot.move(pose, acc=0.01, vel=0.01, wait=True, relative=False, threshold=None)
+# Linear Movement in Relative to current pose coordinates
+robot.movel((0.1, 0, 0, 0, 0, 0), a, v, relative=true)
+# Linear Movement in TCP coordinates
+robot.movel_tool([0,0,-0.03,0,0,0.5], acc=0.1, vel=0.1)
+
+# Circular movement
+# pose_via = robot.getl()
+pose_via[0] += 0.05
+pose_via[1] += 0.05
+
+
+
