@@ -26,6 +26,7 @@ D: Режим смены направления вращения:
 // http://cppstudio.com/post/276 - таблица символов ASCI C 
 // http://www.nongnu.org/avr-libc/user-manual/group__avr__interrupts.html - обработка прерываний в Arduino по таймеру
 // https://lesson.iarduino.ru/page/urok-13-podklyuchenie-klaviatury-4-4-i-pezoizluchatelya-k-arduino - пример работы с кнопкой
+
 */
 
 /*Подпрограмма считывания сигналов с клавиш*/
