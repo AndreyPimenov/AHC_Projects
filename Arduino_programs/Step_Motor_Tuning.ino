@@ -1,5 +1,6 @@
 #include <Keypad.h>
 #include <AccelStepper.h>
+#include <Thread.h>
 
 AccelStepper StandDrive(1, 3, 2); // (number of motor, pin 3 = step, pin 2 = direction)
 
@@ -26,7 +27,7 @@ D: Режим смены направления вращения:
 // http://cppstudio.com/post/276 - таблица символов ASCI C 
 // http://www.nongnu.org/avr-libc/user-manual/group__avr__interrupts.html - обработка прерываний в Arduino по таймеру
 // https://lesson.iarduino.ru/page/urok-13-podklyuchenie-klaviatury-4-4-i-pezoizluchatelya-k-arduino - пример работы с кнопкой
-
+// https://soltau.ru/index.php/arduino/item/373-kak-vypolnyat-parallelnye-zadachi-threads-v-programme-dlya-arduino - многопоточность
 */
 
 /*Подпрограмма считывания сигналов с клавиш*/
@@ -39,15 +40,19 @@ char hexaKeys[ROWS][COLS] = {
 {'*','0','#','D'}
 };
 
-byte rowPins[ROWS] = {5, 6, 7, 8}; // выводы управления строками
-byte colPins[COLS] = {9, 10, 11, 12}; // выводы управления столбцами
+byte rowPins[ROWS] = {4, 5, 6, 7}; // выводы управления строками
+byte colPins[COLS] = {8, 9, 10, 11}; // выводы управления столбцами
+
+// pin 12  -  резервный 
 
 Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 
-void setup() {
-  float V = 150; // Скорость (мм/с)
-  float Sp = round(V * 20.1861);
 
+void setup() {
+  
+
+float V = 150; // Скорость (мм/с)
+float Sp = round(V * 20.1861);
   StandDrive.setMaxSpeed(2300);
   //StandDrive.setAcceleration(10.0);
   StandDrive.setSpeed(Sp);
@@ -59,16 +64,53 @@ void setup() {
 }
 
 void loop(){
+
      
-     StandDrive.runSpeed();
-     //StandDrive.run();
+     //StandDrive.runSpeed(); // классическое вращение двигателя
      
      char key = customKeypad.getKey();
-  if (key){
-     Serial.println(key); // Передаем название нажатой клавиши в сериал порт
-     delay (500);
-     }
+     //if (key){
+     
+     //}
+
+     switch (key) {
+     case 49: 
+             Serial.println("A button is pressed");
+             
+             //Serial.println (V);
+             Serial.println(key); // Передаем название нажатой клавиши в сериал порт
+             delay (500);
+     break;
+
+     case 50: 
+             Serial.println("B button is pressed");
+             
+             //Serial.println (V);
+             Serial.println(key); // Передаем название нажатой клавиши в сериал порт
+             delay (500);
+
+             
+             //StandDrive.run();
+     break;
+
+     case 51: 
+             Serial.println("C button is pressed");
+             //Serial.println (V);
+             Serial.println(key); // Передаем название нажатой клавиши в сериал порт
+             delay (500);
+     break;
+
+     case 52: 
+             Serial.println("D button is pressed");
+             //Serial.println (V);
+             Serial.println(key); // Передаем название нажатой клавиши в сериал порт
+             delay (500);
+             //StandDrive.stop();
+     break;    
 }
+
+}
+
 /*
      StandDrive.runSpeed();
      //StandDrive.run();
@@ -111,4 +153,54 @@ break;
   }
 }
 
+*/
+
+// Многопоточность:
+/*
+#include <Thread.h>  // подключение библиотеки ArduinoThread
+const int soundPin = 3;  // переменная с номером пина пьезоэлемента
+const int ledPin = 13;  // переменная с номером пина светодиода
+
+Thread ledThread = Thread(); // создаём поток управления светодиодом
+Thread soundThread = Thread(); // создаём поток управления сиреной
+
+void setup() {
+    pinMode(soundPin, OUTPUT); // объявляем пин 3 как выход.
+    pinMode(ledPin, OUTPUT);   // объявляем пин 13 как выход.
+
+    ledThread.onRun(ledBlink);  // назначаем потоку задачу
+    ledThread.setInterval(1000); // задаём интервал срабатывания, мсек
+    
+    soundThread.onRun(sound);     // назначаем потоку задачу
+    soundThread.setInterval(20); // задаём интервал срабатывания, мсек
+}
+
+void loop() {
+    // Проверим, пришло ли время переключиться светодиоду:
+    if (ledThread.shouldRun())
+        ledThread.run(); // запускаем поток
+    
+    // Проверим, пришло ли время сменить тональность сирены:
+    if (soundThread.shouldRun())
+        soundThread.run(); // запускаем поток
+}
+
+// Поток светодиода:
+void ledBlink() { 
+    static bool ledStatus = false;    // состояние светодиода Вкл/Выкл
+    ledStatus = !ledStatus;           // инвертируем состояние
+    digitalWrite(ledPin, ledStatus);  // включаем/выключаем светодиод
+}
+
+ // Поток сирены:
+void sound() { 
+    static int ton = 100;  // тональность звука, Гц
+    tone(soundPin, ton);  // включаем сирену на "ton" Гц
+    if (ton <= 500) {  // до частоты 500 Гц 
+        ton += 100;  // увеличиваем тональность сирены
+    }
+    else {  // по достижении 500 Гц
+        ton = 100;  // сбрасываем тональность до 100 Гц
+    }
+}
 */
