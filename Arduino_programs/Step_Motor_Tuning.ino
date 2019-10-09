@@ -74,7 +74,7 @@ bool permission = false;
 // pin 12  -  резервный 
 
 // Подпрограмма считывания сигналов с клавиш:
-void buttoncheck(Keypad keypad_N, char key_local){
+int buttoncheck(Keypad keypad_N, char key_local){
 /*
 Функция, которая считывает изменения в клавиатуре и возвращает Key который был нажат 
 IDLE - не активирована
@@ -105,7 +105,7 @@ RELEASED - отпущена
         //case 'B': Serial.println("B button PRESSED"); delay(200); break;
         //case 'C': Serial.println("C button PRESSED"); delay(200); break;
         //case 'D': Serial.println("D button PRESSED"); delay(200); break;
-        //case '*': (42)
+        case '*': permission = true;
         //case '#': (38) 
         //default:  Serial.println("P Cone");delay(200);
         break; 
@@ -214,70 +214,20 @@ void setup() {
 
 // SOLUTION WITHOUT THREADS:
 void loop(){
-  
-   char key = customKeypad.getKey();
-   buttoncheck(customKeypad, key);
 
-  /*
-     //StandDrive.runSpeed(); // классическое вращение двигателя
-     
-     
-          
+   //StandDrive.runSpeed(); // классическое вращение двигателя
+   
+   char key = customKeypad.getKey();
+   Serial.print(key);
+   //buttoncheck(customKeypad, key);
+
      // Режим A:
      if (key == 65)
      {
       Serial.println("A button is pressed");
-      i = 1; 
       do {
-        
-      //delay(200); //1 sec for operator
       char key2 = customKeypad.getKey();
-      Serial.println("new circle"); //-----------------------------------------------<<
-      Serial.println(key);
-
-      
-      switch(key2){
-        case 48:   number = 0; Serial.println("number0"); delay(200); break;
-        case 49:   number = 1; Serial.println("number1"); delay(200); break;
-        case 50:   number = 2; Serial.println("number2"); delay(200); break;
-        case 51:   number = 3; Serial.println("number3"); delay(200); break;
-        case 52:   number = 4; Serial.println("number4"); delay(200); break;
-        case 53:   number = 5; Serial.println("number5"); delay(200); break;
-        case 54:   number = 6; Serial.println("number6"); delay(200); break;
-        case 55:   number = 7; Serial.println("number7"); delay(200); break;
-        case 56:   number = 8; Serial.println("number8"); delay(200); break;
-        case 57:   number = 9; Serial.println("number9"); delay(200); break;
-        default:   Serial.println(key2);  Serial.println("Cone");delay(200);
-        }
-      
-      
-      /*
-      if (key2 == 48) { number = 0; Serial.println("number0"); delay(200);};
-      if (key2 == 49) { number = 1; Serial.println("number1"); delay(200);};
-      if (key2 == 50) { number = 2; Serial.println("number2"); delay(200);};
-      if (key2 == 51) { number = 3; Serial.println("number3"); delay(200);};
-      if (key2 == 52) { number = 4; Serial.println("number4"); delay(200);};
-      if (key2 == 53) { number = 5; Serial.println("number5"); delay(200);};
-      if (key2 == 54) { number = 6; Serial.println("number6"); delay(200);};
-      if (key2 == 55) { number = 7; Serial.println("number7"); delay(200);};
-      if (key2 == 56) { number = 8; Serial.println("number8"); delay(200);};
-      if (key2 == 57) { number = 9; Serial.println("number9"); delay(200);};
-      */
-
-    
-      
-
-      /*
-      V = number * i;
-      Serial.print("this is velocity");
-      Serial.println(V);
-      delay (50);
-      
-      i = i*10;
-      Serial.print("this is i:");
-      Serial.println(i);
-      delay (50);
-      
+      V = buttoncheck(customKeypad, key2);
       } while (permission == false);
       Serial.println("finish");
       delay (100);    
@@ -288,15 +238,11 @@ void loop(){
      {
       Serial.println("B button is pressed");
       
-      if (V == 0){
-        V = 150;
-        }
-        
-      delay (500);
-      while (key == '0')
+      if (V == 0){ V = 150; }
+      do
       {
         StandDrive.runSpeed();
-      }
+      }while (key == 'B');
       
      }
 
@@ -304,13 +250,11 @@ void loop(){
      if (key == 67)
      {
       Serial.println("С button is pressed");
-     
-      delay (500);
-      while (key == ' ')
+      //delay (500);
+      do
       {
         StandDrive.stop();
-      }
-      
+      } while (key == 'C');
      }
 
 
@@ -318,22 +262,20 @@ void loop(){
      if (key == 68)
      {
       Serial.println("D button is pressed");
-      
       Serial.println(key); // Передаем название нажатой клавиши в сериал порт
       V = V * (-1);
-
       Serial.println (V);
       delay (500);
-      while (key == '0')
+      do
       {
         StandDrive.runSpeed();
-      }
+      }while (key == 'D');
       
      }
 
      
 
-     */
+     
 }
 
 // Если не получится то решать задачу через многопоточность
