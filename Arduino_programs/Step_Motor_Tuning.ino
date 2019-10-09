@@ -22,6 +22,8 @@ D: Режим смены направления вращения:
 // http://www.nongnu.org/avr-libc/user-manual/group__avr__interrupts.html - обработка прерываний в Arduino по таймеру
 // https://lesson.iarduino.ru/page/urok-13-podklyuchenie-klaviatury-4-4-i-pezoizluchatelya-k-arduino - пример работы с кнопкой
 // https://soltau.ru/index.php/arduino/item/373-kak-vypolnyat-parallelnye-zadachi-threads-v-programme-dlya-arduino - многопоточность
+// https://arduinomaster.ru/program/massivy-arduino/ - работа с массива в Ардуино
+// https://arduinomaster.ru/program/arduino-string-stroki/ - работа со строками в Ардуино
 
 // 49 = 1
 // 50 = 2
@@ -33,6 +35,10 @@ D: Режим смены направления вращения:
 // 56 = 8
 // 57 = 9
 
+Нужна функция, которая считывает изменения в клавиатуре и выдает два параметра:
+а) - изменения произошли
+б) - возвращает Key который был нажат 
+
 */
 
 #include <Keypad.h>
@@ -40,68 +46,160 @@ D: Режим смены направления вращения:
 #include <Thread.h>
 
 // Блок переменных по управлению двигателем:
-AccelStepper StandDrive(1, 3, 2); // (number of motor, pin 3 = step, pin 2 = direction)
+AccelStepper StandDrive(1, 3, 2); // (motor number, pin 3 = step, pin 2 = direction)
 float V; // Скорость 150 по умолчанию (мм/с)
 float Sp = round(V * 20.1861); 
 
-// Подпрограмма считывания сигналов с клавиш:
-const byte ROWS = 4; //число строк клавиатуры
-const byte COLS = 4; //число столбцов клавиатуры
+// Блок задания параметров клавиатуры:
+const byte ROWS = 4; 
+const byte COLS = 4; 
 char hexaKeys[ROWS][COLS] = {
-{'1','2','3','A'}, // здесь мы располагаем названия наших клавиш, как на клавиатуре,для удобства пользования
+{'1','2','3','A'}, 
 {'4','5','6','B'},
 {'7','8','9','C'},
 {'*','0','#','D'}
 };
-
-byte rowPins[ROWS] = {4, 5, 6, 7}; // выводы управления строками
-byte colPins[COLS] = {8, 9, 10, 11}; // выводы управления столбцами
+byte rowPins[ROWS] = {4, 5, 6, 7}; 
+byte colPins[COLS] = {8, 9, 10, 11}; 
 Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
-int i = 1; // подсчет разрядности
-int number = 0; // цифра для записи в разряд скорости 
-bool permission = false; 
 
+// Блок общих переменных:
+int click_ind = 0; // подсчет разрядности введенного числа
+int current_index = 0;
+int previous_index = 0;
+
+int digit = 0; // цифра для записи в разряд 
+int number = 0; // цифра скорости
+bool permission = false; 
 // pin 12  -  резервный 
 
-void buttoncheck(char key2){
-  switch (key2) {
-     case 65: //49
-             Serial.println("A button is pressed");
-             Serial.println (V);
-             Serial.println(key2); // Передаем название нажатой клавиши в сериал порт
-             delay (500);
+// Подпрограмма считывания сигналов с клавиш:
+void buttoncheck(Keypad keypad_N, char key_local){
+/*
+Функция, которая считывает изменения в клавиатуре и возвращает Key который был нажат 
+IDLE - не активирована
+PRESSED - нажата
+HOLD - удерживается
+RELEASED - отпущена
+*/
+  previous_index = click_ind;
+  switch (keypad_N.getState()){
 
-             
-     break;
 
-     case 66: 
-             Serial.println("B button is pressed");
-             Serial.println (V);
-             Serial.println(key2); // Передаем название нажатой клавиши в сериал порт
-             delay (500);
-             //StandDrive.run();
-             
-     break;
 
-     case 67: 
-             Serial.println("C button is pressed");
-             Serial.println (V);
-             Serial.println(key2); // Передаем название нажатой клавиши в сериал порт
-             delay (500);
-             
-     break;
-
-     case 68: 
-             Serial.println("D button is pressed");
-             Serial.println (V);
-             Serial.println(key2); // Передаем название нажатой клавиши в сериал порт
-             delay (500);
-             //StandDrive.stop();
-             
-     break;    
+    
+    
+    case PRESSED:
+      switch (key_local){
+        case '0': digit = 0; Serial.println("P digit0"); click_ind = click_ind +1; current_index = click_ind; delay(200); break;
+        case '1': digit = 1; Serial.println("P digit1"); click_ind = click_ind +1; current_index = click_ind; delay(200); break;
+        case '2': digit = 2; Serial.println("P digit2"); click_ind = click_ind +1; current_index = click_ind; delay(200); break;
+        case '3': digit = 3; Serial.println("P digit3"); click_ind = click_ind +1; current_index = click_ind; delay(200); break;  
+        case '4': digit = 4; Serial.println("P digit4"); click_ind = click_ind +1; current_index = click_ind; delay(200); break;
+        case '5': digit = 5; Serial.println("P digit5"); click_ind = click_ind +1; current_index = click_ind; delay(200); break;
+        case '6': digit = 6; Serial.println("P digit6"); click_ind = click_ind +1; current_index = click_ind; delay(200); break;
+        case '7': digit = 7; Serial.println("P digit7"); click_ind = click_ind +1; current_index = click_ind; delay(200); break;
+        case '8': digit = 8; Serial.println("P digit8"); click_ind = click_ind +1; current_index = click_ind; delay(200); break;
+        case '9': digit = 9; Serial.println("P digit9"); click_ind = click_ind +1; current_index = click_ind; delay(200); break;
+        case 'A': Serial.println("A button PRESSED");     click_ind = 0; previous_index = 0; current_index = 0; number = 0; delay(200); break;
+        //case 'B': Serial.println("B button PRESSED"); delay(200); break;
+        //case 'C': Serial.println("C button PRESSED"); delay(200); break;
+        //case 'D': Serial.println("D button PRESSED"); delay(200); break;
+        //case '*': (42)
+        //case '#': (38) 
+        //default:  Serial.println("P Cone");delay(200);
+        break; 
      }
+     
+     break; 
+     /*
+     case RELEASED:
+      switch (key_local){
+        case '0': number = 0; Serial.println("R number0"); delay(200); break;
+        case '1': number = 1; Serial.println("R number1"); delay(200); break;
+        case '2': number = 2; Serial.println("R number2"); delay(200); break;
+        case '3': number = 3; Serial.println("R number3"); delay(200); break;  
+        case '4': number = 4; Serial.println("R number4"); delay(200); break;
+        case '5': number = 5; Serial.println("R number5"); delay(200); break;
+        case '6': number = 6; Serial.println("R number6"); delay(200); break;
+        case '7': number = 7; Serial.println("R number7"); delay(200); break;
+        case '8': number = 8; Serial.println("R number8"); delay(200); break;
+        case '9': number = 9; Serial.println("R number9"); delay(200); break;
+        case 'A': Serial.println("A button RELEASED"); delay(200); break;
+        case 'B': Serial.println("B button RELEASED"); delay(200); break;
+        case 'C': Serial.println("C button RELEASED"); delay(200); break;
+        case 'D': Serial.println("D button RELEASED"); delay(200); break;
+        //case '*':
+        //case '#':  
+        //default:  Serial.println("R Cone");delay(200);
+        break; 
+      }
+     break;
+     
+     case HOLD:
+      switch (key_local){
+        case '0': number = 0; Serial.println("H number0"); delay(200); break;
+        case '1': number = 1; Serial.println("H number1"); delay(200); break;
+        case '2': number = 2; Serial.println("H number2"); delay(200); break;
+        case '3': number = 3; Serial.println("H number3"); delay(200); break;  
+        case '4': number = 4; Serial.println("H number4"); delay(200); break;
+        case '5': number = 5; Serial.println("H number5"); delay(200); break;
+        case '6': number = 6; Serial.println("H number6"); delay(200); break;
+        case '7': number = 7; Serial.println("H number7"); delay(200); break;
+        case '8': number = 8; Serial.println("H number8"); delay(200); break;
+        case '9': number = 9; Serial.println("H number9"); delay(200); break;
+        case 'A': Serial.println("A button HOLD"); delay(200); break;
+        case 'B': Serial.println("B button HOLD"); delay(200); break;
+        case 'C': Serial.println("C button HOLD"); delay(200); break;
+        case 'D': Serial.println("D button HOLD"); delay(200); break;
+        //case '*':
+        //case '#':  
+        //default:  Serial.println("H Cone");delay(200);
+        break; 
+      }
+     */ 
+     /*
+      * 
+     case: IDLE:
+      char key_local = keypad_N.getKey();
+      switch (key_local){
+        case '0': number = 0; Serial.println("I number0"); delay(200); break;
+        case '1': number = 1; Serial.println("I number1"); delay(200); break;
+        case '2': number = 2; Serial.println("I number2"); delay(200); break;
+        case '3': number = 3; Serial.println("I number3"); delay(200); break;  
+        case '4': number = 4; Serial.println("I number4"); delay(200); break;
+        case '5': number = 5; Serial.println("I number5"); delay(200); break;
+        case '6': number = 6; Serial.println("I number6"); delay(200); break;
+        case '7': number = 7; Serial.println("I number7"); delay(200); break;
+        case '8': number = 8; Serial.println("I number8"); delay(200); break;
+        case '9': number = 9; Serial.println("I number9"); delay(200); break;
+        case 'A': Serial.println("A button IDLE"); delay(200); break;
+        case 'B': Serial.println("B button IDLE"); delay(200); break;
+        case 'C': Serial.println("C button IDLE"); delay(200); break;
+        case 'D': Serial.println("D button IDLE"); delay(200); break;
+        //case '*':
+        //case '#':  
+        default:  Serial.println("I Cone");delay(200);
+        }
+        
+      break; */
+
+   
+   
+    }
+
+
+   if (current_index != previous_index) {
+       Serial.println("There is a moment");
+       number = number*10 + digit;
+      
+    
+   }
+
+   if (number < 0) {Serial.println(number);};
+   return number;
   
-  }
+}
 
 void setup() {
   
@@ -110,13 +208,20 @@ void setup() {
   StandDrive.setSpeed(Sp);
 
   Serial.begin(9600);
+  customKeypad.setHoldTime(1000); 
+  customKeypad.setDebounceTime(250); //время на устранения дребезка контактов
 }
 
 // SOLUTION WITHOUT THREADS:
 void loop(){
+  
+   char key = customKeypad.getKey();
+   buttoncheck(customKeypad, key);
+
+  /*
      //StandDrive.runSpeed(); // классическое вращение двигателя
      
-     char key = customKeypad.getKey();
+     
           
      // Режим A:
      if (key == 65)
@@ -125,10 +230,11 @@ void loop(){
       i = 1; 
       do {
         
-      delay(200); //1 sec for operator
+      //delay(200); //1 sec for operator
       char key2 = customKeypad.getKey();
-      Serial.println("do"); //-----------------------------------------------<<
+      Serial.println("new circle"); //-----------------------------------------------<<
       Serial.println(key);
+
       
       switch(key2){
         case 48:   number = 0; Serial.println("number0"); delay(200); break;
@@ -143,21 +249,25 @@ void loop(){
         case 57:   number = 9; Serial.println("number9"); delay(200); break;
         default:   Serial.println(key2);  Serial.println("Cone");delay(200);
         }
-      delay(50);
+      
       
       /*
-      if (int(key2) == 48) { number = 0; delay(50);Serial.println("number0");};
-      if (int(key2) == 49) { number = 1; delay(50);Serial.println("number1");};
-      if (int(key2) == 50) { number = 2; delay(50);Serial.println("number2");};
-      if (int(key2) == 51) { number = 3; delay(50);Serial.println("number3");};
-      if (int(key2) == 52) { number = 4; delay(50);Serial.println("number4");};
-      if (int(key2) == 53) { number = 5; delay(50);Serial.println("number5");};
-      if (int(key2) == 54) { number = 6; delay(50);Serial.println("number6");};
-      if (int(key2) == 55) { number = 7; delay(50);Serial.println("number7");};
-      if (int(key2) == 56) { number = 8; delay(50);Serial.println("number8");};
-      if (int(key2) == 57) { number = 9; delay(50);Serial.println("number9");};
-      // Можно сообщить об ошибке набора: * = 42, # = 38 
+      if (key2 == 48) { number = 0; Serial.println("number0"); delay(200);};
+      if (key2 == 49) { number = 1; Serial.println("number1"); delay(200);};
+      if (key2 == 50) { number = 2; Serial.println("number2"); delay(200);};
+      if (key2 == 51) { number = 3; Serial.println("number3"); delay(200);};
+      if (key2 == 52) { number = 4; Serial.println("number4"); delay(200);};
+      if (key2 == 53) { number = 5; Serial.println("number5"); delay(200);};
+      if (key2 == 54) { number = 6; Serial.println("number6"); delay(200);};
+      if (key2 == 55) { number = 7; Serial.println("number7"); delay(200);};
+      if (key2 == 56) { number = 8; Serial.println("number8"); delay(200);};
+      if (key2 == 57) { number = 9; Serial.println("number9"); delay(200);};
       */
+
+    
+      
+
+      /*
       V = number * i;
       Serial.print("this is velocity");
       Serial.println(V);
@@ -223,7 +333,7 @@ void loop(){
 
      
 
-     
+     */
 }
 
 // Если не получится то решать задачу через многопоточность
