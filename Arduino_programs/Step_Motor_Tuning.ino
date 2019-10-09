@@ -57,6 +57,9 @@ char hexaKeys[ROWS][COLS] = {
 byte rowPins[ROWS] = {4, 5, 6, 7}; // выводы управления строками
 byte colPins[COLS] = {8, 9, 10, 11}; // выводы управления столбцами
 Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
+int i = 1; // подсчет разрядности
+int number = 0; // цифра для записи в разряд скорости 
+bool permission = false; 
 
 // pin 12  -  резервный 
 
@@ -114,56 +117,67 @@ void loop(){
      //StandDrive.runSpeed(); // классическое вращение двигателя
      
      char key = customKeypad.getKey();
-     
+          
      // Режим A:
      if (key == 65)
      {
       Serial.println("A button is pressed");
-      Serial.println (V);
-      Serial.println(key); // Передаем название нажатой клавиши в сериал порт
-      
-      char key = customKeypad.getKey();
-      delay (500);
-
-      Serial.println('Key is: ', key);
-      V = int(key);
-      Serial.println ('Velocity is: ', V);
-      
-      // TO DO:
-      // think how to read numbers into V
-      /*
-      while (key != 65){
-        char key = customKeypad.getKey();
-        if (key == 49){ V = key; Serial.println ('Velocity is: ', V);  }
-      
-      
+      i = 1; 
+      do {
         
+      delay(200); //1 sec for operator
+      char key2 = customKeypad.getKey();
+      Serial.println("do"); //-----------------------------------------------<<
+      Serial.println(key);
+      
+      switch(key2){
+        case 48:   number = 0; Serial.println("number0"); delay(200); break;
+        case 49:   number = 1; Serial.println("number1"); delay(200); break;
+        case 50:   number = 2; Serial.println("number2"); delay(200); break;
+        case 51:   number = 3; Serial.println("number3"); delay(200); break;
+        case 52:   number = 4; Serial.println("number4"); delay(200); break;
+        case 53:   number = 5; Serial.println("number5"); delay(200); break;
+        case 54:   number = 6; Serial.println("number6"); delay(200); break;
+        case 55:   number = 7; Serial.println("number7"); delay(200); break;
+        case 56:   number = 8; Serial.println("number8"); delay(200); break;
+        case 57:   number = 9; Serial.println("number9"); delay(200); break;
+        default:   Serial.println(key2);  Serial.println("Cone");delay(200);
         }
-
+      delay(50);
+      
+      /*
+      if (int(key2) == 48) { number = 0; delay(50);Serial.println("number0");};
+      if (int(key2) == 49) { number = 1; delay(50);Serial.println("number1");};
+      if (int(key2) == 50) { number = 2; delay(50);Serial.println("number2");};
+      if (int(key2) == 51) { number = 3; delay(50);Serial.println("number3");};
+      if (int(key2) == 52) { number = 4; delay(50);Serial.println("number4");};
+      if (int(key2) == 53) { number = 5; delay(50);Serial.println("number5");};
+      if (int(key2) == 54) { number = 6; delay(50);Serial.println("number6");};
+      if (int(key2) == 55) { number = 7; delay(50);Serial.println("number7");};
+      if (int(key2) == 56) { number = 8; delay(50);Serial.println("number8");};
+      if (int(key2) == 57) { number = 9; delay(50);Serial.println("number9");};
+      // Можно сообщить об ошибке набора: * = 42, # = 38 
       */
-
-
+      V = number * i;
+      Serial.print("this is velocity");
+      Serial.println(V);
+      delay (50);
       
-    
-
-
-
-      delay (500);
-      while (key == '0')
-      {
-        StandDrive.runSpeed();
-      }
+      i = i*10;
+      Serial.print("this is i:");
+      Serial.println(i);
+      delay (50);
       
+      } while (permission == false);
+      Serial.println("finish");
+      delay (100);    
      }
 
      // Режим B:
      if (key == 66)
      {
       Serial.println("B button is pressed");
-      Serial.println (V);
-      Serial.println('Key is: ',int(key)); // Передаем название нажатой клавиши в сериал порт
       
-
       if (V == 0){
         V = 150;
         }
@@ -180,9 +194,7 @@ void loop(){
      if (key == 67)
      {
       Serial.println("С button is pressed");
-      Serial.println (V);
-      Serial.println(key); // Передаем название нажатой клавиши в сериал порт
-      
+     
       delay (500);
       while (key == ' ')
       {
@@ -214,6 +226,7 @@ void loop(){
      
 }
 
+// Если не получится то решать задачу через многопоточность
 // Многопоточность:
 /*
 #include <Thread.h>  // подключение библиотеки ArduinoThread
