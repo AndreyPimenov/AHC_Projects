@@ -1,9 +1,3 @@
-#include <Keypad.h>
-#include <AccelStepper.h>
-#include <Thread.h>
-
-AccelStepper StandDrive(1, 3, 2); // (number of motor, pin 3 = step, pin 2 = direction)
-
 /* Техническое задание: есть несколько режимов работы двигателя:
 A - режим настройки скорости (в качестве защиты от дурака вход/выход в режим и из него по долгому нажатию) 
 B - режим запуска сохраненной скорости 
@@ -28,9 +22,29 @@ D: Режим смены направления вращения:
 // http://www.nongnu.org/avr-libc/user-manual/group__avr__interrupts.html - обработка прерываний в Arduino по таймеру
 // https://lesson.iarduino.ru/page/urok-13-podklyuchenie-klaviatury-4-4-i-pezoizluchatelya-k-arduino - пример работы с кнопкой
 // https://soltau.ru/index.php/arduino/item/373-kak-vypolnyat-parallelnye-zadachi-threads-v-programme-dlya-arduino - многопоточность
+
+// 49 = 1
+// 50 = 2
+// 51 = 3
+// 52 = 4
+// 53 = 5
+// 54 = 6
+// 55 = 7
+// 56 = 8
+// 57 = 9
+
 */
 
-/*Подпрограмма считывания сигналов с клавиш*/
+#include <Keypad.h>
+#include <AccelStepper.h>
+#include <Thread.h>
+
+// Блок переменных по управлению двигателем:
+AccelStepper StandDrive(1, 3, 2); // (number of motor, pin 3 = step, pin 2 = direction)
+float V; // Скорость 150 по умолчанию (мм/с)
+float Sp = round(V * 20.1861); 
+
+// Подпрограмма считывания сигналов с клавиш:
 const byte ROWS = 4; //число строк клавиатуры
 const byte COLS = 4; //число столбцов клавиатуры
 char hexaKeys[ROWS][COLS] = {
@@ -42,118 +56,163 @@ char hexaKeys[ROWS][COLS] = {
 
 byte rowPins[ROWS] = {4, 5, 6, 7}; // выводы управления строками
 byte colPins[COLS] = {8, 9, 10, 11}; // выводы управления столбцами
+Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 
 // pin 12  -  резервный 
 
-Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
+void buttoncheck(char key2){
+  switch (key2) {
+     case 65: //49
+             Serial.println("A button is pressed");
+             Serial.println (V);
+             Serial.println(key2); // Передаем название нажатой клавиши в сериал порт
+             delay (500);
 
+             
+     break;
+
+     case 66: 
+             Serial.println("B button is pressed");
+             Serial.println (V);
+             Serial.println(key2); // Передаем название нажатой клавиши в сериал порт
+             delay (500);
+             //StandDrive.run();
+             
+     break;
+
+     case 67: 
+             Serial.println("C button is pressed");
+             Serial.println (V);
+             Serial.println(key2); // Передаем название нажатой клавиши в сериал порт
+             delay (500);
+             
+     break;
+
+     case 68: 
+             Serial.println("D button is pressed");
+             Serial.println (V);
+             Serial.println(key2); // Передаем название нажатой клавиши в сериал порт
+             delay (500);
+             //StandDrive.stop();
+             
+     break;    
+     }
+  
+  }
 
 void setup() {
   
-
-float V = 150; // Скорость (мм/с)
-float Sp = round(V * 20.1861);
   StandDrive.setMaxSpeed(2300);
   //StandDrive.setAcceleration(10.0);
   StandDrive.setSpeed(Sp);
 
-  //pinMode (Freq_Pin, OUTPUT); //Устанавливает порт, который нам нужно переключать в ISR, выходным.
-  //pinMode (DIR_Pin, OUTPUT); 
   Serial.begin(9600);
-  
 }
 
+// SOLUTION WITHOUT THREADS:
 void loop(){
-
-     
      //StandDrive.runSpeed(); // классическое вращение двигателя
      
      char key = customKeypad.getKey();
-     //if (key){
      
-     //}
+     // Режим A:
+     if (key == 65)
+     {
+      Serial.println("A button is pressed");
+      Serial.println (V);
+      Serial.println(key); // Передаем название нажатой клавиши в сериал порт
+      
+      char key = customKeypad.getKey();
+      delay (500);
 
-     switch (key) {
-     case 49: 
-             Serial.println("A button is pressed");
-             
-             //Serial.println (V);
-             Serial.println(key); // Передаем название нажатой клавиши в сериал порт
-             delay (500);
-     break;
+      Serial.println('Key is: ', key);
+      V = int(key);
+      Serial.println ('Velocity is: ', V);
+      
+      // TO DO:
+      // think how to read numbers into V
+      /*
+      while (key != 65){
+        char key = customKeypad.getKey();
+        if (key == 49){ V = key; Serial.println ('Velocity is: ', V);  }
+      
+      
+        
+        }
 
-     case 50: 
-             Serial.println("B button is pressed");
-             
-             //Serial.println (V);
-             Serial.println(key); // Передаем название нажатой клавиши в сериал порт
-             delay (500);
+      */
 
-             
-             //StandDrive.run();
-     break;
 
-     case 51: 
-             Serial.println("C button is pressed");
-             //Serial.println (V);
-             Serial.println(key); // Передаем название нажатой клавиши в сериал порт
-             delay (500);
-     break;
+      
+    
 
-     case 52: 
-             Serial.println("D button is pressed");
-             //Serial.println (V);
-             Serial.println(key); // Передаем название нажатой клавиши в сериал порт
-             delay (500);
-             //StandDrive.stop();
-     break;    
+
+
+      delay (500);
+      while (key == '0')
+      {
+        StandDrive.runSpeed();
+      }
+      
+     }
+
+     // Режим B:
+     if (key == 66)
+     {
+      Serial.println("B button is pressed");
+      Serial.println (V);
+      Serial.println('Key is: ',int(key)); // Передаем название нажатой клавиши в сериал порт
+      
+
+      if (V == 0){
+        V = 150;
+        }
+        
+      delay (500);
+      while (key == '0')
+      {
+        StandDrive.runSpeed();
+      }
+      
+     }
+
+     // Режим C:
+     if (key == 67)
+     {
+      Serial.println("С button is pressed");
+      Serial.println (V);
+      Serial.println(key); // Передаем название нажатой клавиши в сериал порт
+      
+      delay (500);
+      while (key == ' ')
+      {
+        StandDrive.stop();
+      }
+      
+     }
+
+
+     // Режим D:
+     if (key == 68)
+     {
+      Serial.println("D button is pressed");
+      
+      Serial.println(key); // Передаем название нажатой клавиши в сериал порт
+      V = V * (-1);
+
+      Serial.println (V);
+      delay (500);
+      while (key == '0')
+      {
+        StandDrive.runSpeed();
+      }
+      
+     }
+
+     
+
+     
 }
-
-}
-
-/*
-     StandDrive.runSpeed();
-     //StandDrive.run();
-
-     char customKey = customKeypad.getKey();
-
-     digitalWrite (DIR_Pin, HIGH);
-     //digitalWrite (DIR_Pin, LOW);
-
-switch (customKey) {
-case 49: 
-Freq = 0.1;
-Serial.println("START button is pressed");
-Serial.println (Freq);
-//digitalWrite (Freq_Pin, HIGH);
-tone (Freq_Pin, Freq);
-break;
-
-case 50:                        
-Serial.println("Incrementing STEP+");
-Freq = Freq + 0.633;
-Serial.println (Freq);
-tone (Freq_Pin, Freq);
-break;
-
-case 51:                       
-Serial.println("Decrementing STEP-");
-Freq = Freq - 0.633;
-Serial.println (Freq);
-tone (Freq_Pin, Freq);
-break;
-
-case 52:
-Serial.println("STOP button is pressed");
-Freq = Freq;
-Serial.println (Freq);
-noTone (6);
-//digitalWrite (Freq_Pin, LOW);
-break;      
-  }
-}
-
-*/
 
 // Многопоточность:
 /*
