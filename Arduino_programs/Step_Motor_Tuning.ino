@@ -129,20 +129,23 @@ void setup() {
 // SOLUTION WITHOUT THREADS:
 void loop(){
    
-   //StandDrive.runSpeed(); // классическое вращение двигателя
-   
+       
    char key = customKeypad.getKey();
+
 
    do
       {
         StandDrive.runSpeed();
-      }while (driver_flag == true );
-
-   
-   //buttoncheck(customKeypad, key);
+        char key = customKeypad.getKey();
+      }while ((driver_flag == true) and (permission == true) );
  
-   //Serial.print(key);
-   
+ /*
+     while ((driver_flag == true) and (permission == true)){
+        StandDrive.runSpeed();
+        char key = customKeypad.getKey();
+      }
+ */
+     
 
      // ----------------------------------Режим A:
      if (key == 65)
@@ -181,7 +184,7 @@ void loop(){
       
      }
 
-     // Режим C:
+     // ---------------------------------------Режим C:
      if (key == 67)
      {
       Serial.println("С button is pressed");
@@ -190,7 +193,7 @@ void loop(){
      }
 
 
-     // Режим D:
+     // --------------------------------------Режим D:
      if (key == 68)
      {
       Serial.println("D button is pressed");
