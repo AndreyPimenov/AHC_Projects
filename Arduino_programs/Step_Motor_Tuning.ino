@@ -47,7 +47,7 @@ D: Режим смены направления вращения:
 
 // Блок переменных по управлению двигателем:
 AccelStepper StandDrive(1, 3, 2); // (motor number, pin 3 = step, pin 2 = direction)
-float V = 150; // Скорость 150 по умолчанию (мм/с)
+float V; // Скорость 150 по умолчанию (мм/с)
 float Sp = round(V * 20.1861); 
 
 // Блок задания параметров клавиатуры:
@@ -68,10 +68,10 @@ int click_ind = 0; // подсчет разрядности введенного
 int current_index = 0;
 int previous_index = 0;
 
-int flag = 0;
-
 int digit = 0; // цифра для записи в разряд 
 int number = 0; // цифра скорости
+
+bool driver_flag = false;
 bool permission = false; 
 // pin 12  -  резервный 
 
@@ -103,98 +103,21 @@ RELEASED - отпущена
         //case 'B': Serial.println("B button PRESSED"); delay(200); break;
         //case 'C': Serial.println("C button PRESSED"); delay(200); break;
         //case 'D': Serial.println("D button PRESSED"); delay(200); break;
-        case '*': permission = true;
-        //case '#': (38) 
-        //default:  Serial.println("P Cone");delay(200);
-        break; 
-     }
-     
-     break; 
-     /*
-     case RELEASED:
-      switch (key_local){
-        case '0': number = 0; Serial.println("R number0"); delay(200); break;
-        case '1': number = 1; Serial.println("R number1"); delay(200); break;
-        case '2': number = 2; Serial.println("R number2"); delay(200); break;
-        case '3': number = 3; Serial.println("R number3"); delay(200); break;  
-        case '4': number = 4; Serial.println("R number4"); delay(200); break;
-        case '5': number = 5; Serial.println("R number5"); delay(200); break;
-        case '6': number = 6; Serial.println("R number6"); delay(200); break;
-        case '7': number = 7; Serial.println("R number7"); delay(200); break;
-        case '8': number = 8; Serial.println("R number8"); delay(200); break;
-        case '9': number = 9; Serial.println("R number9"); delay(200); break;
-        case 'A': Serial.println("A button RELEASED"); delay(200); break;
-        case 'B': Serial.println("B button RELEASED"); delay(200); break;
-        case 'C': Serial.println("C button RELEASED"); delay(200); break;
-        case 'D': Serial.println("D button RELEASED"); delay(200); break;
-        //case '*':
-        //case '#':  
-        //default:  Serial.println("R Cone");delay(200);
-        break; 
-      }
-     break;
-     
-     case HOLD:
-      switch (key_local){
-        case '0': number = 0; Serial.println("H number0"); delay(200); break;
-        case '1': number = 1; Serial.println("H number1"); delay(200); break;
-        case '2': number = 2; Serial.println("H number2"); delay(200); break;
-        case '3': number = 3; Serial.println("H number3"); delay(200); break;  
-        case '4': number = 4; Serial.println("H number4"); delay(200); break;
-        case '5': number = 5; Serial.println("H number5"); delay(200); break;
-        case '6': number = 6; Serial.println("H number6"); delay(200); break;
-        case '7': number = 7; Serial.println("H number7"); delay(200); break;
-        case '8': number = 8; Serial.println("H number8"); delay(200); break;
-        case '9': number = 9; Serial.println("H number9"); delay(200); break;
-        case 'A': Serial.println("A button HOLD"); delay(200); break;
-        case 'B': Serial.println("B button HOLD"); delay(200); break;
-        case 'C': Serial.println("C button HOLD"); delay(200); break;
-        case 'D': Serial.println("D button HOLD"); delay(200); break;
-        //case '*':
-        //case '#':  
-        //default:  Serial.println("H Cone");delay(200);
-        break; 
-      }
-     */ 
-     /*
-      * 
-     case: IDLE:
-      char key_local = keypad_N.getKey();
-      switch (key_local){
-        case '0': number = 0; Serial.println("I number0"); delay(200); break;
-        case '1': number = 1; Serial.println("I number1"); delay(200); break;
-        case '2': number = 2; Serial.println("I number2"); delay(200); break;
-        case '3': number = 3; Serial.println("I number3"); delay(200); break;  
-        case '4': number = 4; Serial.println("I number4"); delay(200); break;
-        case '5': number = 5; Serial.println("I number5"); delay(200); break;
-        case '6': number = 6; Serial.println("I number6"); delay(200); break;
-        case '7': number = 7; Serial.println("I number7"); delay(200); break;
-        case '8': number = 8; Serial.println("I number8"); delay(200); break;
-        case '9': number = 9; Serial.println("I number9"); delay(200); break;
-        case 'A': Serial.println("A button IDLE"); delay(200); break;
-        case 'B': Serial.println("B button IDLE"); delay(200); break;
-        case 'C': Serial.println("C button IDLE"); delay(200); break;
-        case 'D': Serial.println("D button IDLE"); delay(200); break;
-        //case '*':
-        //case '#':  
-        default:  Serial.println("I Cone");delay(200);
-        }
-        
-      break; */
-    
+        case '*': permission = true; break;
+        case '#': click_ind = 0; current_index = 0; previous_index = 0; digit = 0; number = 0; break;
     }
 
    if (current_index != previous_index) {
        Serial.println("There is a moment");
        number = number*10 + digit;    
    }
-   if (number < 0) {Serial.println(number);};
+   if (number < 0) {Serial.println(number); }
    return number;
 }
-
+}
 void setup() {
   
-  StandDrive.setMaxSpeed(2300);
+  StandDrive.setMaxSpeed(5000); // <------------------------------------- та скорость до которой дв можно разогнать 9Ограничение сверху) 
   //StandDrive.setAcceleration(10.0);
   StandDrive.setSpeed(Sp);
 
@@ -205,37 +128,56 @@ void setup() {
 
 // SOLUTION WITHOUT THREADS:
 void loop(){
-
+   
    //StandDrive.runSpeed(); // классическое вращение двигателя
    
    char key = customKeypad.getKey();
+
+   do
+      {
+        StandDrive.runSpeed();
+      }while (driver_flag == true );
+
+   
    //buttoncheck(customKeypad, key);
  
    //Serial.print(key);
    
 
-     // Режим A:
+     // ----------------------------------Режим A:
      if (key == 65)
      {
       Serial.println("A button is pressed");
+      Serial.println(permission);
       do {
       char key2 = customKeypad.getKey();
       V = buttoncheck(customKeypad, key2);
       } while (permission == false);
+      permission = false; 
       Serial.println("finish");
+      Serial.println(V);
+      Serial.println(permission);
+      
       delay (100);    
      }
 
-     // Режим B:
+     // -------------------------------------Режим B:
      if (key == 66)
      {
       Serial.println("B button is pressed");
-      if (V == 0){ V = 150; Sp = round(V * 20.1861); StandDrive.setSpeed(Sp);}
+      if (V == 0){ V = 150; }
+
+      Serial.println (V);
+      Sp = round(V * 20.1861); 
+      Serial.println (Sp);
+      StandDrive.setSpeed(Sp);
       
       do
       {
         StandDrive.runSpeed();
-      }while (customKeypad.getKeys() == false); //(flag == 1);
+        Serial.println(customKeypad.getKeys());
+      }while (customKeypad.getKeys() == false); 
+      driver_flag = true;
       
      }
 
@@ -244,6 +186,7 @@ void loop(){
      {
       Serial.println("С button is pressed");
       StandDrive.stop();
+      driver_flag = false;
      }
 
 
@@ -251,16 +194,20 @@ void loop(){
      if (key == 68)
      {
       Serial.println("D button is pressed");
+      if (V == 0){ V = 150; }
+     // else { V = number;}
+      
       V = V * (-1);
       Serial.println (V);
       Sp = round(V * 20.1861);
+      Serial.println (Sp);
       StandDrive.setSpeed(Sp);
       
       do
       {
         StandDrive.runSpeed();
-      }while (customKeypad.getKeys() == false); //(key == ' ');
-      
+      }while (customKeypad.getKeys() == false ); //(key == ' ');
+      driver_flag = true;
      }
 }
 
