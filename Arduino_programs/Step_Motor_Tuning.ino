@@ -140,11 +140,11 @@ void loop(){
       }while ((driver_flag == true) and (permission == true) );
  
  /*
-     while ((driver_flag == true) and (permission == true)){
+     while (driver_flag == true){
         StandDrive.runSpeed();
         char key = customKeypad.getKey();
       }
- */
+*/
      
 
      // ----------------------------------Режим A:
