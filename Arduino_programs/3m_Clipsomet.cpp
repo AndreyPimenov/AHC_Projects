@@ -1,366 +1,456 @@
+// Librarires: 
 #include <AccelStepper.h>
 #include "LED.h"
 #include "Button.h"
 #include "Pneumatic.h"
-#include "LCD_Screen.h"
+#include <Wire.h>
+#include <LiquidCrystal_I2C_OLED.h>  // This is custom library (with Rusification)
 
-// pump driver
-#define step_pump 6
-#define dir_pump 5
-
-// small driver 
-#define step_pin 9
-#define dir_pin 8
+LiquidCrystal_I2C lcd(0x27, 16, 2); // LCD config: adress of the start_bit, number of the simbols in the row, number of rows.  
 
 // main driver
 #define step_main 10
 #define dir_main 11
 
+// small driver
+#define step_pin 9
+#define dir_pin 8
+
+// pump driver
+#define step_pump 7
+#define dir_pump 6
+
 // Create objects:
 AccelStepper stepper1(AccelStepper::DRIVER, step_main, dir_main);
 AccelStepper stepper2(AccelStepper::DRIVER, step_pin, dir_pin);
 AccelStepper stepper3(AccelStepper::DRIVER, step_pump, dir_pump);
- 
-Led led_drive(22); // green led
-Led led_pause(23); // yellow led
-Led led_alarm(24); // red led
 
-Pneumatic pa_primer(26);
-Pneumatic pa_breaker(27);
-Pneumatic pa_cutter(28);
-Pneumatic pa_raker(29);
-Pneumatic pa_pusher(30);
+Led led_drive(23); // blue led
+Led led_pause(22); // yellow led
+Led led_alarm(25); // red led <---------------------------------------- C H E C K _ T H I S _ L E D ! ! !
+
+Pneumatic pa_pusher(52);
+Pneumatic pa_raker(50);
+Pneumatic pa_breaker(48);
+Pneumatic pa_cutter(46);
+Pneumatic pa_primer(44); // <----- R E S E R V E
 
 Button btn_drive_pos_a(34);
 Button btn_drive_pos_b(35);
-Button btn_cheker(37);
-Button btn_breaker(38);
+Button btn_cheker(37); 
+Button btn_breaker(36);
+Button btn_raker(38);
 Button btn_cutter(39);
-Button btn_raker(40);
-Button btn_pusher(41);
-Button btn_loсker(42);
-Button btn_liner(43);
+Button btn_pusher(40);
+Button btn_liner(41);
+Button btn_locker(42);  // <----- R E S E R V E
 
 // Block of the variables:
-int freq = 4000; //4000 - max for this driver check for other one
-volatile bool stop_flg = false; // Flag of the stop button; <-- This could be started immediately!!!
-volatile bool recharge_flg = false; // Flag for recharging line in the machine; <-- This could be start not immediately after preparation
-volatile bool start_flg = false; //Flag to start nwew cycle;
-
+int freq = 4000;
+volatile bool stop_flg = false;     // cutter is here
+volatile bool recharge_flg = false; // move back
+volatile bool start_flg = false;    // move forward
 volatile uint32_t debounce;
+bool alarm_flg = false;             // alarm flag
+int end_time = 0;
+int act_time = 0;
+
 
 // Function block:
 
-// This is Pause_function
+// This is Pause_function - it means cutting in this version of code
 void Pause_function() {
-  if (millis() - debounce >= 20 && digitalRead(21)) { // it was 100;
+  if (millis() - debounce >= 20 && digitalRead(21)) {
     debounce = millis();
     stop_flg = true;
     start_flg = false;
     recharge_flg = false;
-    
+  }
+}
+
+// This is Recharge_function - it means moving back in this version of code
+void Recharge_function() {
+  if (millis() - debounce >= 100 && digitalRead(3)) {
+    debounce = millis();
+    recharge_flg = true;
+    recharge_flg = false;
+  }
+}
+
+void Start_function() { // it means moving forward in this version of code
+  if (millis() - debounce >= 100 && digitalRead(2)) {
+    debounce = millis();
+    recharge_flg = true;
+    recharge_flg = false;
+  }
+}
+
+void setup() {
+  pinMode(step_pin, OUTPUT);
+  pinMode(dir_pin, OUTPUT);
+
+  pinMode(step_main, OUTPUT);
+  pinMode(dir_main, OUTPUT);
+  digitalWrite(dir_main, HIGH); // this stepper have to move only in one direction
+
+  pinMode (step_pump, OUTPUT);
+  pinMode (dir_pump, OUTPUT);
+  digitalWrite(dir_pump, HIGH); // this stepper have to move only in one direction
+
+  stepper1.setMaxSpeed(6000.0);    
+  stepper1.setAcceleration(200.0); 
+
+  stepper2.setMaxSpeed(2000.0);
+  stepper2.setAcceleration(200.0);
+
+  stepper3.setMaxSpeed(2000.0);
+  stepper3.setAcceleration(200.0);
+
+  // Interrupt REMINDER: 0 - 2; 1 - 3; 2 - 21; 3 - 20; 4 - 19; 5 - 18; >>> but for I2C 21 & 22 pins are used! >>>  therefore int2 & int3 couldn't be used
+  attachInterrupt(0, Start_function, RISING);    // start_command
+  attachInterrupt(1, Pause_function, RISING);    // cut_command
+  attachInterrupt(4, Recharge_function, RISING); // reverse_command
+  // attachInterrupt(5, RESERVE_FUNCTION, RISING): // <----- R E S E R V E
+
+  lcd.init();
+  lcd.clear();
+  lcd.backlight();
+  lcd.setCursor(0, 0);                 // The beging of the upper row
+  lcd.outStr("Клипсомет");              
+
+  // F O R _ D E B U G G I N G: 
+  //Serial.begin(9600);
+}
+
+#include <AccelStepper.h>
+#include "LED.h"
+#include "Button.h"
+#include "Pneumatic.h"
+#include <Wire.h>
+#include <LiquidCrystal_I2C_OLED.h>  // РћС‡РµРЅСЊ СЂРµРґРєР°СЏ Р±РёР±Р»РёРѕС‚РµРєР° (СЂСѓСЃРёС„РёС†РёСЂРѕРІР°РЅРЅР°СЏ)
+
+LiquidCrystal_I2C lcd(0x27, 16, 2); // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РґРёСЃРїР»РµР№: Р°РґСЂРµСЃ РЅР°С‡Р°Р»СЊРЅРѕРіРѕ Р±РёС‚Р° РїРµСЂРµРґР°С‡Рё РґР°РЅРЅС‹С…, С‡РёСЃР»Рѕ СЃРёРјРІРѕР»РѕРІ РІ СЃС‚СЂРѕРєРµ, С‡РёСЃР»Рѕ СЃС‚СЂРѕРє
+
+// main driver
+#define step_main 10
+#define dir_main 11
+
+// small driver
+#define step_pin 9
+#define dir_pin 8
+
+// pump driver
+#define step_pump 7
+#define dir_pump 6
+
+// Create objects:
+AccelStepper stepper1(AccelStepper::DRIVER, step_main, dir_main);
+AccelStepper stepper2(AccelStepper::DRIVER, step_pin, dir_pin);
+AccelStepper stepper3(AccelStepper::DRIVER, step_pump, dir_pump);
+
+Led led_drive(23); // blue led
+Led led_pause(22); // yellow led
+Led led_alarm(25); // red led
+
+Pneumatic pa_pusher(52);
+Pneumatic pa_raker(50);
+Pneumatic pa_breaker(48);
+Pneumatic pa_cutter(46);
+Pneumatic pa_primer(44); // <----- R E S E R V E
+
+Button btn_drive_pos_a(34);
+Button btn_drive_pos_b(35);
+Button btn_cheker(37);
+Button btn_breaker(36);
+Button btn_raker(38);
+Button btn_cutter(39);
+Button btn_pusher(40);
+Button btn_liner(41);
+Button btn_locker(42);  // <----- R E S E R V E
+
+// Block of the variables:
+int freq = 4000;
+volatile bool stop_flg = false; //
+volatile bool recharge_flg = false;
+volatile bool start_flg = false;
+volatile uint32_t debounce;
+bool alarm_flg = false;
+int end_time = 0; 
+int act_time = 0; // Act the pump
+int cap_time = 0; // Primer cap - cap - cap - cap =) 
+int shift_1 = 2000;
+int shift_2 = 50;
+int shift_3 = 50;
+
+// Function block:
+// This is Pause_function
+void Pause_function() {
+  if (millis() - debounce >= 20) {
+    debounce = millis();
+    if (alarm_flg == false) {
+      stop_flg = true;
+      start_flg = false;
+      recharge_flg = false;
+    }
   }
 }
 
 // This is Recharge_function
 void Recharge_function() {
-  if (millis() - debounce >= 100 && digitalRead(3)) {
+  if (millis() - debounce >= 20) {
     debounce = millis();
-    recharge_flg = true;
-    start_flg = false;
+    if (alarm_flg == false) {
+      stop_flg = false;
+      start_flg = false;
+      recharge_flg = true;
+    }
   }
 }
 
 void Start_function() {
-  if (millis() - debounce >= 100 && digitalRead(2)) {
+  if (millis() - debounce >= 20) {
     debounce = millis();
-    start_flg = true;
-    recharge_flg = false;
+    if (alarm_flg == false) {
+      stop_flg = false;
+      start_flg = true;
+      recharge_flg = false;
+    }
   }
+}
+
+char Alarm_function(){
+  char code;
+// Possible Alarm Situations: 
+    // 01 - time to moving extern the limits:
+    if ("false") { }
+    // 02 - breaker moves down before start is pressed - therefore moving is not possible:
+    if ("false") { }
+    
+    // 02 - there is no KLD in the box:
+    if (btn_cheker.isPressed() == false) { code = '02 '; }
+
+    // 03 - liner is finished:
+    if (btn_liner.isPressed() == false) { code = '03 '; }
+
+    // 04 - lock is opened:
+    if (btn_locker.isPressed() == false) { code = '04 '; }
+
+return code; 
 }
 
 
 void setup() {
-  pinMode (step_pin, OUTPUT);
-  pinMode (dir_pin, OUTPUT);
+  pinMode(step_pin, OUTPUT);
+  pinMode(dir_pin, OUTPUT);
 
-  pinMode (step_main, OUTPUT);
-  pinMode (dir_main, OUTPUT);
+  pinMode(step_main, OUTPUT);
+  pinMode(dir_main, OUTPUT);
   digitalWrite(dir_main, HIGH);
 
-// additional drive:
   pinMode (step_pump, OUTPUT);
   pinMode (dir_pump, OUTPUT);
   digitalWrite(dir_pump, HIGH);
 
-  stepper1.setMaxSpeed(6000.0);    // 6000
-  stepper1.setAcceleration(200.0); // 200
-
-  stepper2.setMaxSpeed(2000.0);    // 2000
-  stepper2.setAcceleration(200.0); // 200
-
-  stepper3.setMaxSpeed(2000.0);    // 2000
-  stepper3.setAcceleration(200.0); // 200
-
- 
-  attachInterrupt(0, Start_function, RISING); // start_btn
-  attachInterrupt(2, Pause_function, RISING); // pause_btn
-  attachInterrupt(1, Recharge_function, RISING); // recharge_btn
-  // Reserve:
-  // attachInterrupt(3, null_func, RISING);
-  // attachInterrupt(4, null_func, RISING);
-  // attachInterrupt(5, null_func, RISING);
-
-}
-
-
-// Previous Version:
-
-void loop() {
-  if (start_flg == true) {
-    while ((btn_drive_pos_b.isPressed() == 0)&& (btn_breaker.isPressed() == 1)) { // while this end_effector is not pressed do following:
-      pa_primer.on();  pa_breaker.off(); //pa_raker.off(); pa_cutter.off(); pa_pusher.off();
-      stepper1.setSpeed(3000);
-      stepper1.runSpeed();
-      //delay(200);
-      stepper2.setSpeed(-1500);
-      stepper2.runSpeed();
-    }
-    
-    pa_primer.off();  
-    
-    if ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 1) && (btn_raker.isPressed() == 1)){ 
-    // if ((btn_drive_pos_b.isPressed() == 1)){ 
-    delay(500); pa_pusher.on(); delay(500);
-    pa_breaker.on(); delay(500);
-    pa_raker.on(); delay(500);
-
-    //recharge_flg = true;
-  }
-}
-
-if (recharge_flg == true) {
-  
-  if ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 1)) {
-    pa_pusher.off();
-    pa_raker.off();
-  }
-  pa_breaker.off(); delay(100); pa_pusher.off(); delay(100); pa_raker.off();
-  while (btn_drive_pos_a.isPressed() == 0) {
-    stepper1.setSpeed(-3000); 
-    stepper1.runSpeed();
-  }
-}
-
-// I add this fubction to button:
-if (stop_flg == true){
-  pa_cutter.on(); delay(200); pa_cutter.off();  // ---------------------------------------------- CHECK IT
-  delay (100);
-  stop_flg = false;
-}
-
-}
-
-
-  // ----------------------------------
-  /*
-  #define dir_pin 9
-  #define step_pin 10
-  #define dir_main 11
-  #define step_main 12
-
-  /*
-  #define alarm_led 30 //Red_LED
-  #define pause_led 26 //Yellow_LED
-  #define drive_led 22 //Green_LED
-  //----------
-  #define drive_position_A  46
-  #define drive_position_B  42
-  #define KLD_checker 45
-  //----------
-  // where hp = home position:
-  #define hp_breaker 50
-  #define hp_cutter 53
-  #define hp_raker 52
-  //----------
-  #define hp_pusher 49
-  #define door_keeper 41
-  #define liner_error 38
-  //----------
-  //where pc = pneumatic cilinder, and pa = pneumatic actuator
-  #define primer_pressure 31 //IN1
-  #define pc_breaker 29      //IN2
-  #define pc_cutter 27       //IN3
-  #define pc_raker 25        //IN4
-  #define pc_pusher 23       //IN5
-*/
-
-// Create objects:
-
-/*
-  AccelStepper stepper1(AccelStepper::DRIVER, step_main, dir_main);
-  AccelStepper stepper2(AccelStepper::DRIVER, step_pin, dir_pin);
-  int ent_time;
-  int act_time;
-
-*/
-
-/*
-  Led led_drive(drive_led);
-  Led led_pause(pause_led);
-  Led led_alarm(alarm_led);
-
-  Pneumatic pa_primer(primer_pressure);
-  Pneumatic pa_breaker(pc_breaker);
-  Pneumatic pa_cutter(pc_cutter);
-  Pneumatic pa_raker(pc_raker);
-  Pneumatic pa_pusher(pc_pusher);
-
-  Button btn_drive_pos_a(drive_position_A);
-  Button btn_drive_pos_b(drive_position_B);
-  Button btn_cheker(KLD_checker);
-  Button btn_breaker(hp_breaker);
-  Button btn_cutter(hp_cutter);
-  Button btn_raker(hp_raker);
-  Button btn_pusher(hp_pusher);
-  Button btn_looker(door_keeper);
-  Button btn_liner(liner_error);
-
-  // Block of the variables:
-  int freq = 4000; //4000 - max for this driver check for other one
-  volatile bool stop_flg = false; // Flag of the stop button; <-- This could be started immediately!!!
-  volatile bool recharge_flg = false; // Flag for recharging line in the machine; <-- This could be start not immediately after preparation
-  volatile bool start_flg = false; //Flag to start nwew cycle;
-
-  volatile uint32_t debounce;
-
-  // Function block:
-  // This function ON/OFF all pneumatic actuators:
-  void Pneumatic_Drives(bool choise, int time_delay) {
-  if (choise == true) {
-    //pa_primer.on(); delay(time_delay); Serial.println("primer on");
-    //pa_breaker.on(); delay(time_delay); Serial.println("breaker on"); delay(time_delay);
-    pa_pusher.on(); delay(time_delay); //Serial.println("pusher on");
-    pa_raker.on(); delay(time_delay); //Serial.println("raker on");
-    pa_cutter.on(); delay(time_delay); //Serial.println("cutter on");
-  }
-
-  if (choise == false) {
-    //pa_primer.off(); delay(time_delay); Serial.println("primer off");
-    //pa_breaker.off(); delay(time_delay); Serial.println("breaker off"); delay(time_delay);
-    pa_cutter.off(); delay(time_delay); //Serial.println("cutter off");
-    pa_raker.off(); delay(time_delay); //Serial.println("raker off");
-    pa_pusher.off(); delay(time_delay); //Serial.println("pusher off");
-  }
-  }
-
-  // This is Pause_function
-  void Pause_function() {
-  if (millis() - debounce >= 20 && digitalRead(21)) { // it was 100;
-    debounce = millis();
-    stop_flg = true;
-    start_flg = false;
-    recharge_flg = false;
-
-  }
-  }
-
-  // This is Recharge_function
-  void Recharge_function() {
-  if (millis() - debounce >= 100 && digitalRead(3)) {
-    debounce = millis();
-    recharge_flg = true;
-    start_flg = false;
-  }
-  }
-
-  void Start_function() {
-  if (millis() - debounce >= 100 && digitalRead(2)) {
-    debounce = millis();
-    start_flg = true;
-    recharge_flg = false;
-  }
-  }
-*/  //Introduction block
-/*
-  void setup() {
-  pinMode (step_pin, OUTPUT);
-  pinMode (dir_pin, OUTPUT);
-
-  pinMode (step_main, OUTPUT);
-  pinMode (dir_main, OUTPUT);
-  digitalWrite(dir_main, HIGH);
-
-  stepper1.setMaxSpeed(6000.0);
-  stepper1.setAcceleration(200.0);
+  stepper1.setMaxSpeed(6000.0);    
+  stepper1.setAcceleration(200.0); 
 
   stepper2.setMaxSpeed(2000.0);
   stepper2.setAcceleration(200.0);
-*/
+
+  stepper3.setMaxSpeed(2000.0);
+  stepper3.setAcceleration(200.0);
+
+  // Interrupt REMINDER: 0 - 2; 1 - 3; 2 - 21; 3 - 20; 4 - 19; 5 - 18; but for I2C 21 & 20 pins are used ! therefore int2 & int3 couldn't be used
+  attachInterrupt(4, Start_function, RISING); // start_btn
+  attachInterrupt(0, Pause_function, RISING); // cut_command
+  attachInterrupt(1, Recharge_function, RISING); // reverse_command
+  // attachInterrupt(5, RESERVE_FUNCTION, RISING): // <----- R E S E R V E
+
+  // Init LCD:
+  lcd.init();
+  lcd.clear();
+  lcd.backlight();
+  lcd.setCursor(0, 0); 
+  lcd.outStr("КЛИПСОМЕТ"); 
+
+  // F O R _ D E B U G G I N G:
+  //Serial.begin(9600);
+}
+
+void loop() {
+
+  // C H E C K I N G _ T H E _ E N D _ E F F E C T O R S _ S Y S T E M
+  /*
+    Serial.print(btn_drive_pos_a.isPressed());
+    Serial.print(btn_drive_pos_b.isPressed());
+
+    Serial.print(btn_cheker.isPressed());
+    Serial.print(btn_breaker.isPressed());
+
+    Serial.print(btn_raker.isPressed());
+    Serial.print(btn_cutter.isPressed());
+
+    Serial.print(btn_pusher.isPressed());
+    Serial.print(btn_liner.isPressed());
+
+    Serial.println(btn_locker.isPressed());
+
+    delay (100); // 1000
+  */
+
+  // C H E C K I N G _ T H E _ S T E P P E R _ S Y S T E M (just change the number of the motor exept the 1st one)
+  // stepper3.setSpeed(600);
+  // stepper3.runSpeed();
+
+  // C H E C K I N G _ T H E _ P N E U M A T I C _ S Y S T E M
+  /*
+    pa_pusher.on();  delay (1000);    pa_pusher.off();  delay(1000);
+    pa_raker.on();   delay (1000);    pa_raker.off();   delay(1000);
+    pa_breaker.on(); delay (1000);    pa_breaker.off(); delay(1000);
+    pa_cutter.on();  delay (1000);    pa_cutter.off();  delay(1000);
+    pa_liner.on();   delay (1000);    pa_liner.off();   delay(1000);
+  */
+
+  // C O M P L E X _ C H E C K _ ( _ L C D _  & _ B T N S _)
+  /*
+    if (btn_drive_pos_a.isPressed()) {
+    Serial.println("Pos A"); lcd.setCursor(0, 1); lcd.outStr("РџРѕР»РѕР¶РµРЅРёРµ Рђ     "); delay (1000);
+    }
+
+    if (btn_drive_pos_b.isPressed()) {
+    Serial.println("Pos B"); lcd.setCursor(0, 1); lcd.outStr("РџРѕР»РѕР¶РµРЅРёРµ Р‘     "); delay (1000);
+    }
+
+    if (btn_cheker.isPressed())     {
+    Serial.println("Check"); lcd.setCursor(0, 1); lcd.outStr("РљР›Р” РІ РјР°РіР°Р·РёРЅРµ  "); delay (1000);
+    }
+
+    if (btn_breaker.isPressed())    {
+    Serial.println("Break"); lcd.setCursor(0, 1); lcd.outStr("Р’С‹Р±РёРІР°С‚РµР»СЊ РІРєР»  "); delay (1000);
+    }
+
+    if (btn_raker.isPressed())      {
+    Serial.println("Raker");  lcd.setCursor(0, 1); lcd.outStr("Р“СЂРµР±РµРЅРєР° РґРѕРјР°С€РЅРёРµ"); delay (1000);
+    }
+
+    if (btn_cutter.isPressed())     {
+    Serial.println("Cuter"); lcd.setCursor(0, 1); lcd.outStr("Р РµР·РєР° РґРѕРјР°С€РЅРµРµ"); delay(1000);
+    }
+
+    if (btn_pusher.isPressed())     {
+    Serial.println("Pusher");  lcd.setCursor(0, 1); lcd.outStr("РЎС‚Р°Р»РєРёРІР°С‚РµР»СЊ РІРєР»"); delay(1000);
+    }
+
+    if (btn_liner.isPressed())      {
+    Serial.println("Liner"); lcd.setCursor(0, 1); lcd.outStr("Р›Р°Р№РЅРµСЂ РЅРµ РЅР° РјРµСЃС‚Рµ"); delay(1000);
+    }
+
+    if (btn_locker.isPressed())     {
+    Serial.println("Locker"); lcd.setCursor(0, 1); lcd.outStr("Р”РІРµСЂС†Р° Р·Р°РєСЂС‹С‚Р°  "); delay(1000);
+    }
+  */
+
+  // T H E _ M A I N :
+
+  // ---------------------- A L A R M ------State:
+  if (alarm_flg == true) {
+    led_alarm.on();
+    lcd.clear();
+    lcd.setCursor(0, 0); lcd.outStr("   О Ш И Б К А  ");
 
 
-/*
-  Serial.begin(9600);
-  attachInterrupt(0, Start_function, RISING); // start_btn
-  attachInterrupt(2, Pause_function, RISING); // pause_btn
-  attachInterrupt(1, Recharge_function, RISING); // recharge_btn
+    lcd.setCursor(0, 1); lcd.outStr(" код ошибки: " + Alarm_function());
+    // delay(3000);
+    //
 
-*/
-//}
 
-//void loop() {
-/*
+  }
+
+
+  // ---------------------- S T A R T ------State:
   if (start_flg == true) {
-  ent_time = millis();
-  while ((btn_drive_pos_b.isPressed() == 0)&& (btn_breaker.isPressed() == 1)) { // while this end_effector is not pressed do following:
-    pa_primer.on();  pa_breaker.off(); //pa_raker.off(); pa_cutter.off(); pa_pusher.off();
-*/
-//  stepper1.setSpeed(600);
-//  stepper1.runSpeed();
-//stepper2.run();
+    led_drive.on();
+    lcd.setCursor(0, 1); lcd.outStr("   СТАРТ НАЖАТ  ");
 
+    end_time = millis();
+    while ((btn_drive_pos_b.isPressed() == 0) && (btn_breaker.isPressed() == 1)) { // while this end_effector is not pressed do following:
+      act_time = millis();
+      if ((act_time - end_time) > shift_1) { // ---------------------------- time shift 1 - b/n START_COMAND and start primer_pump
+        stepper3.setSpeed(1500);             // ---------------------------- sign could be changed
+        stepper3.runSpeed();
+        cap_time = millis();
+        if (((cap_time - act_time) > shift_2) && (pa_primer.state_return false)) {   pa_primer.on();  } // --- 50 ms is delta time b/n start primer_pump and pa_primer.on();
+      }
+      
+      
+      stepper1.setSpeed(3000);
+      stepper1.runSpeed();
+      stepper2.setSpeed(1200);
+      stepper2.runSpeed();
+    }
 
-//      act_time = millis();
-//      if ((act_time - ent_time) > 2000){ // ---------------------------- time delay
-//      stepper2.setSpeed(-1500);
-//      stepper2.runSpeed();
+    
+    if ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 1) && (btn_raker.isPressed() == 1)) {
+      delay(500); pa_pusher.on(); delay(500);
+      pa_breaker.on(); delay(500);
+      pa_raker.on(); delay(500);
+    }
+    led_drive.off();
+    start_flg = false; 
 
-//      }
+    // Possible Alarm Situations: 
+    // time to moving extern the limits
+    // breaker moves down therefore moving is not possible
+    // there is no KLD in the box
+    // liner is finished
+    
 
-/*
   }
 
-  pa_primer.off();
 
-  if ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 1) && (btn_raker.isPressed() == 1)){
-  // if ((btn_drive_pos_b.isPressed() == 1)){
-  delay(500); pa_pusher.on(); delay(500);
-  pa_breaker.on(); delay(500);
-  pa_raker.on(); delay(500);
-
-  //recharge_flg = true;
-  }
-  }
+ // ---------------------- M O V E _ B A C K ------ State:
 
   if (recharge_flg == true) {
+    led_drive.on();
+    lcd.setCursor(0, 1); lcd.outStr("   НАЗАД НАЖАТ ");
 
-  if ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 1)) {
-  pa_pusher.off();
-  pa_raker.off();
-  }
-  pa_breaker.off(); delay(100); pa_pusher.off(); delay(100); pa_raker.off();
-  while (btn_drive_pos_a.isPressed() == 0) {
-  stepper1.setSpeed(-3000);
-  stepper1.runSpeed();
-  }
+    if ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 1)) {
+      pa_pusher.off();
+      pa_raker.off();
+    }
+    pa_breaker.off(); delay(100); pa_pusher.off(); delay(100); pa_raker.off();
+    while (btn_drive_pos_a.isPressed() == 0) {
+      stepper1.setSpeed(-3000);
+      stepper1.runSpeed();
+    }
+    led_drive.off();
+    recharge_flg = false;
+
+  // Possible Alarm Situations: 
+    // time to moving extern the limits
+    // breaker moves down therefore moving is not possible
+    // there is no KLD in the box
+    // liner is finished
+
+
   }
 
-  // I add this fubction to button:
-  if (stop_flg == true){
-  pa_cutter.on(); delay(200); pa_cutter.off();  // ---------------------------------------------- CHECK IT
-  delay (100);
-  stop_flg = false;
-  }
-*/
+  // ---------------------- C U T T E R ------ State:
+  if (stop_flg == true) {
+    led_pause.on();
+    lcd.setCursor(0, 1); lcd.outStr("   РЕЗАК НАЖАТ  ");
 
-//}
+    pa_cutter.on(); delay(200); pa_cutter.off();  // ---------------------------------------------- CHECK IT
+    delay (100);
+
+    led_pause.off();
+    stop_flg = false;
+  // Possible Alarm Situations: 
+    // time to moving extern the limits
+    // breaker moves down therefore moving is not possible
+    // there is no KLD in the box
+    // liner is finished
+
+  }
+  
+}
