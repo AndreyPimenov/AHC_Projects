@@ -38,10 +38,10 @@ Button btn_drive_pos_a(34);
 Button btn_drive_pos_b(35);
 Button btn_cheker(37);
 Button btn_breaker(36);
-Button btn_raker(38);
-Button btn_cutter(39);
-Button btn_pusher(40);
-Button btn_liner(41);
+Button btn_raker(39);
+Button btn_cutter(38);
+Button btn_pusher(41);
+Button btn_liner(40);
 Button btn_locker(42);  // <----- R E S E R V E
 
 // Block of the variables:
@@ -51,12 +51,12 @@ volatile bool recharge_flg = false;
 volatile bool start_flg = false;
 volatile uint32_t debounce;
 bool alarm_flg = false;
-int end_time = 0; 
+int start_time = 0;
 int act_time = 0; // Act the pump
-int cap_time = 0; // Primer cap - cap - cap - cap =) 
-int shift_1 = 2000;
-int shift_2 = 50;
-int shift_3 = 50;
+//int cap_time = 0; // Primer cap - cap - cap - cap =)
+int shift_1 = 1000; //2000
+int shift_2 = 1500;   //200
+//int shift_3 = 50;
 
 // Function block:
 // This is Pause_function
@@ -94,24 +94,30 @@ void Start_function() {
   }
 }
 
-char Alarm_function(){
-  hex code = 0x00000;
-// Possible Alarm Situations: 
-    // 01 - time to moving extern the limits:
-    if ("false") { code += 0x10000; }
-    // 02 - breaker moves down before start is pressed - therefore moving is not possible:
-    if ("false") { code += 0x01000; }
-    
-    // 02 - there is no KLD in the box:
-    if (btn_cheker.isPressed() == false) { code += 0x00100; }
+byte Alarm_function() {
+  byte code = 0b00000000;
+  // Possible Alarm Situations:
+  // 01 - time to moving extern the limits:
+  //if ("false") { code += 0x10000; }
+  // 02 - breaker moves down before start is pressed - therefore moving is not possible:
+  //if ("false") { code += 0x01000; }
 
-    // 03 - liner is finished:
-    if (btn_liner.isPressed() == false) { code += 0x00010; }
+  // 02 - there is no KLD in the box:
+  if (btn_cheker.isPressed() == false) {
+    code += 0b00000100;
+  }
 
-    // 04 - lock is opened:
-    if (btn_locker.isPressed() == false) { code += 0x00001; }
+  // 03 - liner is finished:
+  if (btn_liner.isPressed() == false) {
+    code += 0b00000010;
+  }
 
-return char(code); 
+  // 04 - lock is opened:
+  if (btn_locker.isPressed() == false) {
+    code += 0b00000001;
+  }
+
+  return code;
 }
 
 
@@ -127,8 +133,8 @@ void setup() {
   pinMode (dir_pump, OUTPUT);
   digitalWrite(dir_pump, HIGH);
 
-  stepper1.setMaxSpeed(6000.0);    
-  stepper1.setAcceleration(200.0); 
+  stepper1.setMaxSpeed(6000.0);
+  stepper1.setAcceleration(200.0);
 
   stepper2.setMaxSpeed(2000.0);
   stepper2.setAcceleration(200.0);
@@ -146,8 +152,8 @@ void setup() {
   lcd.init();
   lcd.clear();
   lcd.backlight();
-  lcd.setCursor(0, 0); 
-  lcd.outStr("КЛИПСОМЕТ"); 
+  lcd.setCursor(0, 0);
+  lcd.outStr("КЛИПСОМЕТ       ");
 
   // F O R _ D E B U G G I N G:
   //Serial.begin(9600);
@@ -159,19 +165,14 @@ void loop() {
   /*
     Serial.print(btn_drive_pos_a.isPressed());
     Serial.print(btn_drive_pos_b.isPressed());
-
     Serial.print(btn_cheker.isPressed());
     Serial.print(btn_breaker.isPressed());
-
     Serial.print(btn_raker.isPressed());
     Serial.print(btn_cutter.isPressed());
-
     Serial.print(btn_pusher.isPressed());
     Serial.print(btn_liner.isPressed());
-
     Serial.println(btn_locker.isPressed());
-
-    delay (100); // 1000
+    delay (500); // 1000
   */
 
   // C H E C K I N G _ T H E _ S T E P P E R _ S Y S T E M (just change the number of the motor exept the 1st one)
@@ -192,35 +193,27 @@ void loop() {
     if (btn_drive_pos_a.isPressed()) {
     Serial.println("Pos A"); lcd.setCursor(0, 1); lcd.outStr("Положение А     "); delay (1000);
     }
-
     if (btn_drive_pos_b.isPressed()) {
     Serial.println("Pos B"); lcd.setCursor(0, 1); lcd.outStr("Положение Б     "); delay (1000);
     }
-
     if (btn_cheker.isPressed())     {
     Serial.println("Check"); lcd.setCursor(0, 1); lcd.outStr("КЛД в магазине  "); delay (1000);
     }
-
     if (btn_breaker.isPressed())    {
     Serial.println("Break"); lcd.setCursor(0, 1); lcd.outStr("Выбиватель дома "); delay (1000);
     }
-
     if (btn_raker.isPressed())      {
     Serial.println("Raker");  lcd.setCursor(0, 1); lcd.outStr("Гребенка дома   "); delay (1000);
     }
-
     if (btn_cutter.isPressed())     {
     Serial.println("Cuter"); lcd.setCursor(0, 1); lcd.outStr("Резак дома      "); delay(1000);
     }
-
     if (btn_pusher.isPressed())     {
     Serial.println("Pusher");  lcd.setCursor(0, 1); lcd.outStr("Толкатель дома  "); delay(1000);
     }
-
     if (btn_liner.isPressed())      {
     Serial.println("Liner"); lcd.setCursor(0, 1); lcd.outStr("Лента заправлена"); delay(1000);
     }
-
     if (btn_locker.isPressed())     {
     Serial.println("Locker"); lcd.setCursor(0, 1); lcd.outStr("Дверца закрыта  "); delay(1000);
     }
@@ -232,14 +225,10 @@ void loop() {
   if (alarm_flg == true) {
     led_alarm.on();
     lcd.clear();
-    lcd.setCursor(0, 0); lcd.outStr("   О Ш И Б К А  ");
+    lcd.setCursor(0, 0); lcd.outStr(" О Ш И Б К А ");
 
-
-    lcd.setCursor(0, 1); lcd.outStr("код ошибки:" + Alarm_function());
-    // delay(3000);
-    //
-
-
+    lcd.setCursor(0, 1); lcd.print(Alarm_function());
+    delay(3000);
   }
 
 
@@ -247,44 +236,53 @@ void loop() {
   if (start_flg == true) {
     led_drive.on();
     lcd.setCursor(0, 1); lcd.outStr("   СТАРТ НАЖАТ  ");
+    start_time = millis();
 
-    end_time = millis();
-    while ((btn_drive_pos_b.isPressed() == 0) && (btn_breaker.isPressed() == 1)) { // while this end_effector is not pressed do following:
+    while ((btn_drive_pos_b.isPressed() == 0) && (btn_breaker.isPressed() == 1)) {
       act_time = millis();
-      if ((act_time - end_time) > shift_1) { // ---------------------------- time shift 1 - b/n START_COMAND and start primer_pump
-        stepper3.setSpeed(1500);             // ---------------------------- sign could be changed
-        stepper3.runSpeed();
-        cap_time = millis();
-        if (((cap_time - act_time) > shift_2) && (pa_primer.state_return false)) {   pa_primer.on();  } // --- 50 ms is delta time b/n start primer_pump and pa_primer.on();
-      }
-      
-      
       stepper1.setSpeed(3000);
       stepper1.runSpeed();
       stepper2.setSpeed(1200);
       stepper2.runSpeed();
+
+      //act_time = millis();
+      if ((act_time - start_time) >= shift_1) {
+        stepper3.setSpeed(600);
+        stepper3.runSpeed();
+        //led_pause.on();
+        if (pa_pusher.state_return() == false) {
+          pa_primer.on(); // than for primer()
+        }
+      }
+
+      if (((act_time - start_time) >= shift_2) /*&& (pa_primer.state_return() == false)*/) {
+        // pa_pusher.on();  // --- 50 ms is delta time b/n start primer_pump and pa_primer.on();
+        led_pause.off();
+      }
+
+
     }
 
-    
-    if ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 1) && (btn_raker.isPressed() == 1)) {
+
+    if ((btn_drive_pos_b.isPressed() == 1) /*&& (btn_breaker.isPressed() == 1) && (btn_raker.isPressed() == 1)*/) {
+      //led_pause.off(); // here primer is closed;
       delay(500); pa_pusher.on(); delay(500);
       pa_breaker.on(); delay(500);
       pa_raker.on(); delay(500);
+
     }
     led_drive.off();
-    start_flg = false; 
+    start_flg = false;
 
-    // Possible Alarm Situations: 
+    // Possible Alarm Situations:
     // time to moving extern the limits
     // breaker moves down therefore moving is not possible
     // there is no KLD in the box
     // liner is finished
-    
-
   }
 
 
- // ---------------------- M O V E _ B A C K ------ State:
+  // ---------------------- M O V E _ B A C K ------ State:
 
   if (recharge_flg == true) {
     led_drive.on();
@@ -294,20 +292,20 @@ void loop() {
       pa_pusher.off();
       pa_raker.off();
     }
-    pa_breaker.off(); delay(100); pa_pusher.off(); delay(100); pa_raker.off();
+    pa_breaker.off(); delay(100); //pa_pusher.off(); delay(100); //pa_raker.off();
     while (btn_drive_pos_a.isPressed() == 0) {
       stepper1.setSpeed(-3000);
       stepper1.runSpeed();
     }
+    btn_drive_pos_b.update();
     led_drive.off();
     recharge_flg = false;
 
-  // Possible Alarm Situations: 
+    // Possible Alarm Situations:
     // time to moving extern the limits
     // breaker moves down therefore moving is not possible
     // there is no KLD in the box
     // liner is finished
-
 
   }
 
@@ -321,12 +319,11 @@ void loop() {
 
     led_pause.off();
     stop_flg = false;
-  // Possible Alarm Situations: 
+    // Possible Alarm Situations:
     // time to moving extern the limits
     // breaker moves down therefore moving is not possible
     // there is no KLD in the box
     // liner is finished
-
   }
 
 }
