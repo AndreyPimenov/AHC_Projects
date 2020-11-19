@@ -314,39 +314,39 @@ void loop() {
   // C O M P L E X _ C H E C K _ ( _ L C D _  & _ B T N S _)
   /*
     if (btn_drive_pos_a.isPressed()) {
-    Serial.println("Pos A"); lcd.setCursor(0, 1); lcd.outStr("РџРѕР»РѕР¶РµРЅРёРµ Рђ     "); delay (1000);
+    Serial.println("Pos A"); lcd.setCursor(0, 1); lcd.outStr("Положение А     "); delay (1000);
     }
 
     if (btn_drive_pos_b.isPressed()) {
-    Serial.println("Pos B"); lcd.setCursor(0, 1); lcd.outStr("РџРѕР»РѕР¶РµРЅРёРµ Р‘     "); delay (1000);
+    Serial.println("Pos B"); lcd.setCursor(0, 1); lcd.outStr("Положение Б     "); delay (1000);
     }
 
     if (btn_cheker.isPressed())     {
-    Serial.println("Check"); lcd.setCursor(0, 1); lcd.outStr("РљР›Р” РІ РјР°РіР°Р·РёРЅРµ  "); delay (1000);
+    Serial.println("Check"); lcd.setCursor(0, 1); lcd.outStr("КЛД в магазине  "); delay (1000);
     }
 
     if (btn_breaker.isPressed())    {
-    Serial.println("Break"); lcd.setCursor(0, 1); lcd.outStr("Р’С‹Р±РёРІР°С‚РµР»СЊ РІРєР»  "); delay (1000);
+    Serial.println("Break"); lcd.setCursor(0, 1); lcd.outStr("Выбиватель дома "); delay (1000);
     }
 
     if (btn_raker.isPressed())      {
-    Serial.println("Raker");  lcd.setCursor(0, 1); lcd.outStr("Р“СЂРµР±РµРЅРєР° РґРѕРјР°С€РЅРёРµ"); delay (1000);
+    Serial.println("Raker");  lcd.setCursor(0, 1); lcd.outStr("Гребенка дома   "); delay (1000);
     }
 
     if (btn_cutter.isPressed())     {
-    Serial.println("Cuter"); lcd.setCursor(0, 1); lcd.outStr("Р РµР·РєР° РґРѕРјР°С€РЅРµРµ"); delay(1000);
+    Serial.println("Cuter"); lcd.setCursor(0, 1); lcd.outStr("Резак дома      "); delay(1000);
     }
 
     if (btn_pusher.isPressed())     {
-    Serial.println("Pusher");  lcd.setCursor(0, 1); lcd.outStr("РЎС‚Р°Р»РєРёРІР°С‚РµР»СЊ РІРєР»"); delay(1000);
+    Serial.println("Pusher");  lcd.setCursor(0, 1); lcd.outStr("Толкатель дома  "); delay(1000);
     }
 
     if (btn_liner.isPressed())      {
-    Serial.println("Liner"); lcd.setCursor(0, 1); lcd.outStr("Р›Р°Р№РЅРµСЂ РЅРµ РЅР° РјРµСЃС‚Рµ"); delay(1000);
+    Serial.println("Liner"); lcd.setCursor(0, 1); lcd.outStr("Лента заправлена"); delay(1000);
     }
 
     if (btn_locker.isPressed())     {
-    Serial.println("Locker"); lcd.setCursor(0, 1); lcd.outStr("Р”РІРµСЂС†Р° Р·Р°РєСЂС‹С‚Р°  "); delay(1000);
+    Serial.println("Locker"); lcd.setCursor(0, 1); lcd.outStr("Дверца закрыта  "); delay(1000);
     }
   */
 
@@ -452,5 +452,5 @@ void loop() {
     // liner is finished
 
   }
-  
+
 }
