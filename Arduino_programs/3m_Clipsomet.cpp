@@ -219,23 +219,23 @@ void Start_function() {
 }
 
 char Alarm_function(){
-  char code;
+  hex code = 0x00000;
 // Possible Alarm Situations: 
     // 01 - time to moving extern the limits:
-    if ("false") { }
+    if ("false") { code += 0x10000; }
     // 02 - breaker moves down before start is pressed - therefore moving is not possible:
-    if ("false") { }
+    if ("false") { code += 0x01000; }
     
     // 02 - there is no KLD in the box:
-    if (btn_cheker.isPressed() == false) { code = '02 '; }
+    if (btn_cheker.isPressed() == false) { code += 0x00100; }
 
     // 03 - liner is finished:
-    if (btn_liner.isPressed() == false) { code = '03 '; }
+    if (btn_liner.isPressed() == false) { code += 0x00010; }
 
     // 04 - lock is opened:
-    if (btn_locker.isPressed() == false) { code = '04 '; }
+    if (btn_locker.isPressed() == false) { code += 0x00001; }
 
-return code; 
+return char(code); 
 }
 
 
@@ -359,7 +359,7 @@ void loop() {
     lcd.setCursor(0, 0); lcd.outStr("   О Ш И Б К А  ");
 
 
-    lcd.setCursor(0, 1); lcd.outStr(" код ошибки: " + Alarm_function());
+    lcd.setCursor(0, 1); lcd.outStr("код ошибки:" + Alarm_function());
     // delay(3000);
     //
 
