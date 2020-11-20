@@ -242,27 +242,24 @@ void loop() {
       act_time = millis();
       stepper1.setSpeed(3000);
       stepper1.runSpeed();
-      stepper2.setSpeed(1200);
-      stepper2.runSpeed();
+      //stepper2.setSpeed(1200);
+      //stepper2.runSpeed();
 
-      //act_time = millis();
       if ((act_time - start_time) >= shift_1) {
+        stepper2.setSpeed(600);
+        stepper2.runSpeed();
+      }
+
+      if ((act_time - start_time) >= shift_2) {
         stepper3.setSpeed(600);
         stepper3.runSpeed();
-        //led_pause.on();
-        if (pa_pusher.state_return() == false) {
-          pa_primer.on(); // than for primer()
-        }
       }
-
-      if (((act_time - start_time) >= shift_2) /*&& (pa_primer.state_return() == false)*/) {
-        // pa_pusher.on();  // --- 50 ms is delta time b/n start primer_pump and pa_primer.on();
-        led_pause.off();
+      
+      if ((act_time - start_time) >= shift_3) {
+        stepper3.stop();
       }
-
 
     }
-
 
     if ((btn_drive_pos_b.isPressed() == 1) /*&& (btn_breaker.isPressed() == 1) && (btn_raker.isPressed() == 1)*/) {
       //led_pause.off(); // here primer is closed;
