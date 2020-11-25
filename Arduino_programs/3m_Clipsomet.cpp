@@ -53,10 +53,9 @@ volatile uint32_t debounce;
 bool alarm_flg = false;
 int start_time = 0;
 int act_time = 0; // Act the pump
-//int cap_time = 0; // Primer cap - cap - cap - cap =)
-int shift_1 = 1000; //2000
-int shift_2 = 1500;   //200
-//int shift_3 = 50;
+int shift_1 = 1000;  // 1000ms from position A to Start small stepper
+int shift_2 = 500;  // 500ms from Position A to Start primer pump 
+int shift_3 = 2400; // 2400ms from Position A to Stop primer pump
 
 // Function block:
 // This is Pause_function
@@ -250,8 +249,8 @@ void loop() {
         stepper2.runSpeed();
       }
 
-      if ((act_time - start_time) >= shift_2) {
-        stepper3.setSpeed(600);
+      if (((act_time - start_time) >= shift_2)&&((act_time - start_time) < shift_3)) {
+        stepper3.setSpeed(350);
         stepper3.runSpeed();
       }
       
