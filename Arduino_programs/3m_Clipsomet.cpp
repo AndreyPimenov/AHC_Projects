@@ -1,11 +1,15 @@
+// a. Make the full automation system
+// b. Find why the Start Btn starts unexpectly sometimes 
+// c. 
+
 #include <AccelStepper.h>
 #include "LED.h"
 #include "Button.h"
 #include "Pneumatic.h"
 #include <Wire.h>
-#include <LiquidCrystal_I2C_OLED.h>  // РћС‡РµРЅСЊ СЂРµРґРєР°СЏ Р±РёР±Р»РёРѕС‚РµРєР° (СЂСѓСЃРёС„РёС†РёСЂРѕРІР°РЅРЅР°СЏ)
+#include <LiquidCrystal_I2C_OLED.h>  // Rare lib with Rusification
 
-LiquidCrystal_I2C lcd(0x27, 16, 2); // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РґРёСЃРїР»РµР№: Р°РґСЂРµСЃ РЅР°С‡Р°Р»СЊРЅРѕРіРѕ Р±РёС‚Р° РїРµСЂРµРґР°С‡Рё РґР°РЅРЅС‹С…, С‡РёСЃР»Рѕ СЃРёРјРІРѕР»РѕРІ РІ СЃС‚СЂРѕРєРµ, С‡РёСЃР»Рѕ СЃС‚СЂРѕРє
+LiquidCrystal_I2C lcd(0x27, 16, 2); // 
 
 // main driver
 #define step_main 10
@@ -53,9 +57,9 @@ volatile uint32_t debounce;
 bool alarm_flg = false;
 int start_time = 0;
 int act_time = 0; // Act the pump
-int shift_1 = 800;  // 200ms from position A to Start small stepper
-int shift_2 = 500;  // 600ms from Position A to Start primer pump 
-int shift_3 = 2400; // 2200ms from Position A to Stop primer pump
+int shift_1 = 800;  // 800ms from position A to Start small stepper
+int shift_2 = 400;  // 500ms from Position A to Start primer pump
+int shift_3 = 2400; // 2400ms from Position A to Stop primer pump
 
 // Function block:
 // This is Pause_function
@@ -143,8 +147,8 @@ void setup() {
 
   // Interrupt REMINDER: 0 - 2; 1 - 3; 2 - 21; 3 - 20; 4 - 19; 5 - 18; but for I2C 21 & 20 pins are used ! therefore int2 & int3 couldn't be used
   attachInterrupt(4, Start_function, RISING); // start_btn
-  attachInterrupt(0, Pause_function, RISING); // cut_command
-  attachInterrupt(1, Recharge_function, RISING); // reverse_command
+  //attachInterrupt(0, Pause_function, RISING); // cut_command
+  //attachInterrupt(1, Recharge_function, RISING); // reverse_command
   // attachInterrupt(5, RESERVE_FUNCTION, RISING): // <----- R E S E R V E
 
   // Init LCD:
@@ -166,13 +170,13 @@ void loop() {
     Serial.print(btn_drive_pos_b.isPressed());
     Serial.print(btn_cheker.isPressed());
     Serial.print(btn_breaker.isPressed());
-    Serial.print(btn_raker.isPressed());
+    Serial.println(btn_raker.isPressed());
     Serial.print(btn_cutter.isPressed());
     Serial.print(btn_pusher.isPressed());
     Serial.print(btn_liner.isPressed());
     Serial.println(btn_locker.isPressed());
     delay (500); // 1000
-  */
+    }*/
 
   // C H E C K I N G _ T H E _ S T E P P E R _ S Y S T E M (just change the number of the motor exept the 1st one)
   // stepper3.setSpeed(600);
@@ -190,41 +194,42 @@ void loop() {
   // C O M P L E X _ C H E C K _ ( _ L C D _  & _ B T N S _)
   /*
     if (btn_drive_pos_a.isPressed()) {
-    Serial.println("Pos A"); lcd.setCursor(0, 1); lcd.outStr("Положение А     "); delay (1000);
+    Serial.println("Pos A"); lcd.setCursor(0, 1); lcd.outStr("РџРѕР»РѕР¶РµРЅРёРµ Рђ     "); delay (1000);
     }
     if (btn_drive_pos_b.isPressed()) {
-    Serial.println("Pos B"); lcd.setCursor(0, 1); lcd.outStr("Положение Б     "); delay (1000);
+    Serial.println("Pos B"); lcd.setCursor(0, 1); lcd.outStr("РџРѕР»РѕР¶РµРЅРёРµ Р‘     "); delay (1000);
     }
     if (btn_cheker.isPressed())     {
-    Serial.println("Check"); lcd.setCursor(0, 1); lcd.outStr("КЛД в магазине  "); delay (1000);
+    Serial.println("Check"); lcd.setCursor(0, 1); lcd.outStr("РљР›Р” РІ РјР°РіР°Р·РёРЅРµ  "); delay (1000);
     }
     if (btn_breaker.isPressed())    {
-    Serial.println("Break"); lcd.setCursor(0, 1); lcd.outStr("Выбиватель дома "); delay (1000);
+    Serial.println("Break"); lcd.setCursor(0, 1); lcd.outStr("Р’С‹Р±РёРІР°С‚РµР»СЊ РґРѕРјР° "); delay (1000);
     }
     if (btn_raker.isPressed())      {
-    Serial.println("Raker");  lcd.setCursor(0, 1); lcd.outStr("Гребенка дома   "); delay (1000);
+    Serial.println("Raker");  lcd.setCursor(0, 1); lcd.outStr("Р“СЂРµР±РµРЅРєР° РґРѕРјР°   "); delay (1000);
     }
     if (btn_cutter.isPressed())     {
-    Serial.println("Cuter"); lcd.setCursor(0, 1); lcd.outStr("Резак дома      "); delay(1000);
+    Serial.println("Cuter"); lcd.setCursor(0, 1); lcd.outStr("Р РµР·Р°Рє РґРѕРјР°      "); delay(1000);
     }
     if (btn_pusher.isPressed())     {
-    Serial.println("Pusher");  lcd.setCursor(0, 1); lcd.outStr("Толкатель дома  "); delay(1000);
+    Serial.println("Pusher");  lcd.setCursor(0, 1); lcd.outStr("РўРѕР»РєР°С‚РµР»СЊ РґРѕРјР°  "); delay(1000);
     }
     if (btn_liner.isPressed())      {
-    Serial.println("Liner"); lcd.setCursor(0, 1); lcd.outStr("Лента заправлена"); delay(1000);
+    Serial.println("Liner"); lcd.setCursor(0, 1); lcd.outStr("Р›РµРЅС‚Р° Р·Р°РїСЂР°РІР»РµРЅР°"); delay(1000);
     }
     if (btn_locker.isPressed())     {
-    Serial.println("Locker"); lcd.setCursor(0, 1); lcd.outStr("Дверца закрыта  "); delay(1000);
+    Serial.println("Locker"); lcd.setCursor(0, 1); lcd.outStr("Р”РІРµСЂС†Р° Р·Р°РєСЂС‹С‚Р°  "); delay(1000);
     }
   */
 
   // T H E _ M A I N :
 
+
   // ---------------------- A L A R M ------State:
   if (alarm_flg == true) {
     led_alarm.on();
     lcd.clear();
-    lcd.setCursor(0, 0); lcd.outStr(" О Ш И Б К А ");
+    lcd.setCursor(0, 0); lcd.outStr(" КЛИПСОМЕТ ");
 
     lcd.setCursor(0, 1); lcd.print(Alarm_function());
     delay(3000);
@@ -237,33 +242,34 @@ void loop() {
     lcd.setCursor(0, 1); lcd.outStr("   СТАРТ НАЖАТ  ");
     start_time = millis();
 
-    while ((btn_drive_pos_b.isPressed() == 0) && (btn_breaker.isPressed() == 1)) {
+    while ((btn_drive_pos_b.isPressed() == 0) && (btn_breaker.isPressed() == 0) && (btn_raker.isPressed() == 0) && (btn_pusher.isPressed() == 1)) {
       act_time = millis();
       stepper1.setSpeed(3000);
       stepper1.runSpeed();
       //stepper2.setSpeed(1200);
       //stepper2.runSpeed();
-
+/*
       if ((act_time - start_time) >= shift_1) {
         stepper2.setSpeed(600);
         stepper2.runSpeed();
       }
 
-      if (((act_time - start_time) >= shift_2)&&((act_time - start_time) < shift_3)) {
+      if (((act_time - start_time) >= shift_2) && ((act_time - start_time) < shift_3)) {
         stepper3.setSpeed(50);
         stepper3.runSpeed();
       }
-      
+
       if ((act_time - start_time) >= shift_3) {
         //stepper3.stop();
         stepper3.setSpeed(-50);
         stepper3.runSpeed();
       }
-
+*/
     }
 
     if ((btn_drive_pos_b.isPressed() == 1) /*&& (btn_breaker.isPressed() == 1) && (btn_raker.isPressed() == 1)*/) {
       //led_pause.off(); // here primer is closed;
+
       delay(500); pa_pusher.on(); delay(500);
       pa_breaker.on(); delay(500);
       pa_raker.on(); delay(500);
@@ -271,22 +277,36 @@ void loop() {
     }
     led_drive.off();
     start_flg = false;
-
-    // Possible Alarm Situations:
-    // time to moving extern the limits
-    // breaker moves down therefore moving is not possible
-    // there is no KLD in the box
-    // liner is finished
+    stop_flg = true;
   }
+
+ // ---------------------- C U T T E R ------ State:
+  if (stop_flg == true) {
+    btn_raker.update();
+    led_pause.on();
+    lcd.setCursor(0, 1); lcd.outStr("   РЕЗКА        ");
+    
+
+    if (btn_raker.isPressed() == 1) {
+      pa_cutter.on(); delay(200); pa_cutter.off();  // ---------------------------------------------- CHECK IT
+      delay (100);
+    }
+
+    led_pause.off();
+    stop_flg = false;
+    recharge_flg = true;
+  }
+
+
 
 
   // ---------------------- M O V E _ B A C K ------ State:
 
   if (recharge_flg == true) {
     led_drive.on();
-    lcd.setCursor(0, 1); lcd.outStr("   НАЗАД НАЖАТ ");
+    lcd.setCursor(0, 1); lcd.outStr("   НАЗАД НАЖАТ  ");
 
-    if ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 1)) {
+    if ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 0)) {
       pa_pusher.off();
       pa_raker.off();
     }
@@ -298,30 +318,9 @@ void loop() {
     btn_drive_pos_b.update();
     led_drive.off();
     recharge_flg = false;
-
-    // Possible Alarm Situations:
-    // time to moving extern the limits
-    // breaker moves down therefore moving is not possible
-    // there is no KLD in the box
-    // liner is finished
-
+    start_flg = true;
   }
 
-  // ---------------------- C U T T E R ------ State:
-  if (stop_flg == true) {
-    led_pause.on();
-    lcd.setCursor(0, 1); lcd.outStr("   РЕЗАК НАЖАТ  ");
-
-    pa_cutter.on(); delay(200); pa_cutter.off();  // ---------------------------------------------- CHECK IT
-    delay (100);
-
-    led_pause.off();
-    stop_flg = false;
-    // Possible Alarm Situations:
-    // time to moving extern the limits
-    // breaker moves down therefore moving is not possible
-    // there is no KLD in the box
-    // liner is finished
-  }
+ 
 
 }
