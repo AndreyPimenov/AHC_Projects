@@ -4,8 +4,9 @@
 #include "Pneumatic.h"
 #include <Wire.h>
 #include <LiquidCrystal_I2C_OLED.h>  // Rare Libruary with Rusification
+#include <Servo.h>
 
-LiquidCrystal_I2C lcd(0x27, 16, 2); // 16 - pixels 2 -rows 
+LiquidCrystal_I2C lcd(0x27, 16, 2); // 16 - pixels 2 -rows
 // main driver
 #define step_main 10
 #define dir_main 11
@@ -22,6 +23,9 @@ LiquidCrystal_I2C lcd(0x27, 16, 2); // 16 - pixels 2 -rows
 AccelStepper stepper1(AccelStepper::DRIVER, step_main, dir_main);
 AccelStepper stepper2(AccelStepper::DRIVER, step_pin, dir_pin);
 AccelStepper stepper3(AccelStepper::DRIVER, step_pump, dir_pump);
+
+Servo srv;
+int pos = 135;
 
 Led led_drive(23); // blue led
 Led led_pause(22); // yellow led
@@ -120,6 +124,8 @@ byte Alarm_function() {
 
 
 void setup() {
+  srv.attach(12);
+  
   pinMode(step_pin, OUTPUT);
   pinMode(dir_pin, OUTPUT);
 
@@ -241,54 +247,39 @@ void loop() {
       act_time = millis();
       stepper1.setSpeed(3000);
       stepper1.runSpeed();
-      
 
-      if ((act_time - start_time) >= shift_1) {
-        stepper2.setSpeed(600);
-        stepper2.runSpeed();
-      }
+      /*
+            if ((act_time - start_time) >= shift_1) {
+              stepper2.setSpeed(600);
+              stepper2.runSpeed();
+            }
 
-      if (((act_time - start_time) >= shift_2) && ((act_time - start_time) < shift_3)) {
-        stepper3.setSpeed(50);
-        stepper3.runSpeed();
-      }
+            if (((act_time - start_time) >= shift_2) && ((act_time - start_time) < shift_3)) {
+              stepper3.setSpeed(50);
+              stepper3.runSpeed();
+            }
 
-      if ((act_time - start_time) >= shift_3) {
-        //stepper3.stop();
-        stepper3.setSpeed(-50);
-        stepper3.runSpeed();
-      }
+            if ((act_time - start_time) >= shift_3) {
 
+              stepper3.setSpeed(-50);
+              stepper3.runSpeed();
+            }
+      */
     }
 
     if ((btn_drive_pos_b.isPressed() == 1) /*&& (btn_breaker.isPressed() == 1) && (btn_raker.isPressed() == 1)*/) {
       //led_pause.off(); // here primer is closed;
 
       delay(500); pa_pusher.on(); delay(500);
-      pa_breaker.on(); 
-     
-      //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!dobavil tut 3 strochki
-      delay(100);
-      pa_breaker.off();
-      delay(500);
-      pa_raker.on(); delay(500);
-      //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Servodvigatel postavit suda
-      /*
-       void loop() {
-  char key = keypad.getKey();
-  switch (key) {
-    case 49:
-      for (pos = 135; pos <= 170; pos += 1) {
-        srv.write(pos);
-        delay(15);
-      }
-      break;
+      pa_breaker.on();
 
-    case 50:
-      for (pos = 170 ; pos >= 135; pos -= 1) { 
-        srv.write(pos);              
-        delay(15);          
-       */
+      // Fast breaker on is here:
+      delay(100); pa_breaker.off();
+      delay(500); pa_raker.on(); delay(500);
+      //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Servodvigatel postavit suda
+      
+      for (pos = 170 ; pos >= 135; pos -= 1) {srv.write(pos); delay(15);}
+      
 
     }
     led_drive.off();
@@ -296,12 +287,12 @@ void loop() {
     //stop_flg = true;
   }
 
- // ---------------------- C U T T E R ------ State:
+  // ---------------------- C U T T E R ------ State:
   if (stop_flg == true) {
     btn_raker.update();
     led_pause.on();
     lcd.setCursor(0, 1); lcd.outStr("   РЕЗАК НАЖАТ  ");
-    
+
 
     if (btn_raker.isPressed() == 1) {
       pa_cutter.on(); delay(200); pa_cutter.off();  // ---------------------------------------------- CHECK IT
@@ -320,19 +311,21 @@ void loop() {
   if (recharge_flg == true) {
     led_drive.on();
     lcd.setCursor(0, 1); lcd.outStr("   НАЗАД НАЖАТ ");
-   // btn_breaker.update();
+    // btn_breaker.update();
 
-    if ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 0)) { // breaker was 0
-      pa_pusher.off(); 
-      pa_raker.off();  
-      
+    if ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 0)) {
+      pa_pusher.off();
+      pa_raker.off();
+      for (pos = 135; pos <= 170; pos += 1) {srv.write(pos); delay(15);}
     }
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Ubral tut
-   // pa_breaker.off(); delay(100); //pa_pusher.off(); delay(100); //pa_raker.off();
+
     while (btn_drive_pos_a.isPressed() == 0) {
       stepper1.setSpeed(-3000);
       stepper1.runSpeed();
+      
     }
+    
+   
     btn_drive_pos_b.update();
     led_drive.off();
     recharge_flg = false;
