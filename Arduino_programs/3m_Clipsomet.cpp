@@ -3,10 +3,9 @@
 #include "Button.h"
 #include "Pneumatic.h"
 #include <Wire.h>
-#include <LiquidCrystal_I2C_OLED.h>  // РћС‡РµРЅСЊ СЂРµРґРєР°СЏ Р±РёР±Р»РёРѕС‚РµРєР° (СЂСѓСЃРёС„РёС†РёСЂРѕРІР°РЅРЅР°СЏ)
+#include <LiquidCrystal_I2C_OLED.h>  // Rare Libruary with Rusification
 
-LiquidCrystal_I2C lcd(0x27, 16, 2); // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РґРёСЃРїР»РµР№: Р°РґСЂРµСЃ РЅР°С‡Р°Р»СЊРЅРѕРіРѕ Р±РёС‚Р° РїРµСЂРµРґР°С‡Рё РґР°РЅРЅС‹С…, С‡РёСЃР»Рѕ СЃРёРјРІРѕР»РѕРІ РІ СЃС‚СЂРѕРєРµ, С‡РёСЃР»Рѕ СЃС‚СЂРѕРє
-
+LiquidCrystal_I2C lcd(0x27, 16, 2); // 16 - pixels 2 -rows 
 // main driver
 #define step_main 10
 #define dir_main 11
