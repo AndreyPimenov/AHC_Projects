@@ -1,15 +1,11 @@
-// a. Make the full automation system
-// b. Find why the Start Btn starts unexpectly sometimes 
-// c. 
-
 #include <AccelStepper.h>
 #include "LED.h"
 #include "Button.h"
 #include "Pneumatic.h"
 #include <Wire.h>
-#include <LiquidCrystal_I2C_OLED.h>  // Rare lib with Rusification
+#include <LiquidCrystal_I2C_OLED.h>  // РћС‡РµРЅСЊ СЂРµРґРєР°СЏ Р±РёР±Р»РёРѕС‚РµРєР° (СЂСѓСЃРёС„РёС†РёСЂРѕРІР°РЅРЅР°СЏ)
 
-LiquidCrystal_I2C lcd(0x27, 16, 2); // 
+LiquidCrystal_I2C lcd(0x27, 16, 2); // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РґРёСЃРїР»РµР№: Р°РґСЂРµСЃ РЅР°С‡Р°Р»СЊРЅРѕРіРѕ Р±РёС‚Р° РїРµСЂРµРґР°С‡Рё РґР°РЅРЅС‹С…, С‡РёСЃР»Рѕ СЃРёРјРІРѕР»РѕРІ РІ СЃС‚СЂРѕРєРµ, С‡РёСЃР»Рѕ СЃС‚СЂРѕРє
 
 // main driver
 #define step_main 10
@@ -147,8 +143,8 @@ void setup() {
 
   // Interrupt REMINDER: 0 - 2; 1 - 3; 2 - 21; 3 - 20; 4 - 19; 5 - 18; but for I2C 21 & 20 pins are used ! therefore int2 & int3 couldn't be used
   attachInterrupt(4, Start_function, RISING); // start_btn
-  //attachInterrupt(0, Pause_function, RISING); // cut_command
-  //attachInterrupt(1, Recharge_function, RISING); // reverse_command
+  attachInterrupt(0, Pause_function, RISING); // cut_command
+  attachInterrupt(1, Recharge_function, RISING); // reverse_command
   // attachInterrupt(5, RESERVE_FUNCTION, RISING): // <----- R E S E R V E
 
   // Init LCD:
@@ -194,31 +190,31 @@ void loop() {
   // C O M P L E X _ C H E C K _ ( _ L C D _  & _ B T N S _)
   /*
     if (btn_drive_pos_a.isPressed()) {
-    Serial.println("Pos A"); lcd.setCursor(0, 1); lcd.outStr("РџРѕР»РѕР¶РµРЅРёРµ Рђ     "); delay (1000);
+    Serial.println("Pos A"); lcd.setCursor(0, 1); lcd.outStr("Положение А     "); delay (1000);
     }
     if (btn_drive_pos_b.isPressed()) {
-    Serial.println("Pos B"); lcd.setCursor(0, 1); lcd.outStr("РџРѕР»РѕР¶РµРЅРёРµ Р‘     "); delay (1000);
+    Serial.println("Pos B"); lcd.setCursor(0, 1); lcd.outStr("Положение Б     "); delay (1000);
     }
     if (btn_cheker.isPressed())     {
-    Serial.println("Check"); lcd.setCursor(0, 1); lcd.outStr("РљР›Р” РІ РјР°РіР°Р·РёРЅРµ  "); delay (1000);
+    Serial.println("Check"); lcd.setCursor(0, 1); lcd.outStr("КЛД в магазине  "); delay (1000);
     }
     if (btn_breaker.isPressed())    {
-    Serial.println("Break"); lcd.setCursor(0, 1); lcd.outStr("Р’С‹Р±РёРІР°С‚РµР»СЊ РґРѕРјР° "); delay (1000);
+    Serial.println("Break"); lcd.setCursor(0, 1); lcd.outStr("Выбиватель дома "); delay (1000);
     }
     if (btn_raker.isPressed())      {
-    Serial.println("Raker");  lcd.setCursor(0, 1); lcd.outStr("Р“СЂРµР±РµРЅРєР° РґРѕРјР°   "); delay (1000);
+    Serial.println("Raker");  lcd.setCursor(0, 1); lcd.outStr("Гребенка дома   "); delay (1000);
     }
     if (btn_cutter.isPressed())     {
-    Serial.println("Cuter"); lcd.setCursor(0, 1); lcd.outStr("Р РµР·Р°Рє РґРѕРјР°      "); delay(1000);
+    Serial.println("Cuter"); lcd.setCursor(0, 1); lcd.outStr("Резак дома      "); delay(1000);
     }
     if (btn_pusher.isPressed())     {
-    Serial.println("Pusher");  lcd.setCursor(0, 1); lcd.outStr("РўРѕР»РєР°С‚РµР»СЊ РґРѕРјР°  "); delay(1000);
+    Serial.println("Pusher");  lcd.setCursor(0, 1); lcd.outStr("Толкатель дома  "); delay(1000);
     }
     if (btn_liner.isPressed())      {
-    Serial.println("Liner"); lcd.setCursor(0, 1); lcd.outStr("Р›РµРЅС‚Р° Р·Р°РїСЂР°РІР»РµРЅР°"); delay(1000);
+    Serial.println("Liner"); lcd.setCursor(0, 1); lcd.outStr("Лента заправлена"); delay(1000);
     }
     if (btn_locker.isPressed())     {
-    Serial.println("Locker"); lcd.setCursor(0, 1); lcd.outStr("Р”РІРµСЂС†Р° Р·Р°РєСЂС‹С‚Р°  "); delay(1000);
+    Serial.println("Locker"); lcd.setCursor(0, 1); lcd.outStr("Дверца закрыта  "); delay(1000);
     }
   */
 
@@ -229,7 +225,7 @@ void loop() {
   if (alarm_flg == true) {
     led_alarm.on();
     lcd.clear();
-    lcd.setCursor(0, 0); lcd.outStr(" КЛИПСОМЕТ ");
+    lcd.setCursor(0, 0); lcd.outStr(" О Ш И Б К А ");
 
     lcd.setCursor(0, 1); lcd.print(Alarm_function());
     delay(3000);
@@ -246,9 +242,8 @@ void loop() {
       act_time = millis();
       stepper1.setSpeed(3000);
       stepper1.runSpeed();
-      //stepper2.setSpeed(1200);
-      //stepper2.runSpeed();
-/*
+      
+
       if ((act_time - start_time) >= shift_1) {
         stepper2.setSpeed(600);
         stepper2.runSpeed();
@@ -264,37 +259,58 @@ void loop() {
         stepper3.setSpeed(-50);
         stepper3.runSpeed();
       }
-*/
+
     }
 
     if ((btn_drive_pos_b.isPressed() == 1) /*&& (btn_breaker.isPressed() == 1) && (btn_raker.isPressed() == 1)*/) {
       //led_pause.off(); // here primer is closed;
 
       delay(500); pa_pusher.on(); delay(500);
-      pa_breaker.on(); delay(500);
+      pa_breaker.on(); 
+     
+      //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!dobavil tut 3 strochki
+      delay(100);
+      pa_breaker.off();
+      delay(500);
       pa_raker.on(); delay(500);
+      //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Servodvigatel postavit suda
+      /*
+       void loop() {
+  char key = keypad.getKey();
+  switch (key) {
+    case 49:
+      for (pos = 135; pos <= 170; pos += 1) {
+        srv.write(pos);
+        delay(15);
+      }
+      break;
+
+    case 50:
+      for (pos = 170 ; pos >= 135; pos -= 1) { 
+        srv.write(pos);              
+        delay(15);          
+       */
 
     }
     led_drive.off();
     start_flg = false;
-    stop_flg = true;
+    //stop_flg = true;
   }
 
  // ---------------------- C U T T E R ------ State:
   if (stop_flg == true) {
     btn_raker.update();
     led_pause.on();
-    lcd.setCursor(0, 1); lcd.outStr("   РЕЗКА        ");
+    lcd.setCursor(0, 1); lcd.outStr("   РЕЗАК НАЖАТ  ");
     
 
     if (btn_raker.isPressed() == 1) {
       pa_cutter.on(); delay(200); pa_cutter.off();  // ---------------------------------------------- CHECK IT
-      delay (100);
     }
 
     led_pause.off();
     stop_flg = false;
-    recharge_flg = true;
+    //recharge_flg = true;
   }
 
 
@@ -304,13 +320,16 @@ void loop() {
 
   if (recharge_flg == true) {
     led_drive.on();
-    lcd.setCursor(0, 1); lcd.outStr("   НАЗАД НАЖАТ  ");
+    lcd.setCursor(0, 1); lcd.outStr("   НАЗАД НАЖАТ ");
+   // btn_breaker.update();
 
-    if ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 0)) {
-      pa_pusher.off();
-      pa_raker.off();
+    if ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 0)) { // breaker was 0
+      pa_pusher.off(); 
+      pa_raker.off();  
+      
     }
-    pa_breaker.off(); delay(100); //pa_pusher.off(); delay(100); //pa_raker.off();
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Ubral tut
+   // pa_breaker.off(); delay(100); //pa_pusher.off(); delay(100); //pa_raker.off();
     while (btn_drive_pos_a.isPressed() == 0) {
       stepper1.setSpeed(-3000);
       stepper1.runSpeed();
@@ -318,9 +337,7 @@ void loop() {
     btn_drive_pos_b.update();
     led_drive.off();
     recharge_flg = false;
-    start_flg = true;
+    //start_flg = true;
+
   }
-
- 
-
 }
