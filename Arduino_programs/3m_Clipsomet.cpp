@@ -124,7 +124,7 @@ byte Alarm_function() {
 
 
 void setup() {
-  srv.attach(12);
+  srv.attach(5);
   
   pinMode(step_pin, OUTPUT);
   pinMode(dir_pin, OUTPUT);
@@ -333,3 +333,22 @@ void loop() {
 
   }
 }
+
+/* add to interrrupts:
+   void setup() {
+  // прерывание на D2 (UNO/NANO)
+  attachInterrupt(0, isr, CHANGE);
+}
+volatile uint32_t debounce;
+void isr() {
+  // оставим 100 мс таймаут на гашение дребезга
+  // CHANGE не предоставляет состояние пина, 
+  // придётся узнать его при помощи digitalRead
+  if (millis() - debounce >= 100 && digitalRead(2)) {
+    debounce = millis();
+    // ваш код по прерыванию по высокому сигналу
+  }
+}
+void loop() {
+}
+ */
