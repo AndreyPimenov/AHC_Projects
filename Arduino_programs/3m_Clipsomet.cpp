@@ -63,7 +63,7 @@ int shift_3 = 2400; // 2400ms from Position A to Stop primer pump
 // Function block:
 // This is Pause_function
 void Pause_function() {
-  if (millis() - debounce >= 20) {
+  if (millis() - debounce >= 20 && digitalRead(2) ) {
     debounce = millis();
     if (alarm_flg == false) {
       stop_flg = true;
@@ -75,7 +75,7 @@ void Pause_function() {
 
 // This is Recharge_function
 void Recharge_function() {
-  if (millis() - debounce >= 20) {
+  if (millis() - debounce >= 20 && digitalRead(3)  ) {
     debounce = millis();
     if (alarm_flg == false) {
       stop_flg = false;
@@ -86,7 +86,7 @@ void Recharge_function() {
 }
 
 void Start_function() {
-  if (millis() - debounce >= 20) {
+  if (millis() - debounce >= 20 && digitalRead(19) ) {
     debounce = millis();
     if (alarm_flg == false) {
       stop_flg = false;
@@ -147,9 +147,9 @@ void setup() {
   stepper3.setAcceleration(200.0);
 
   // Interrupt REMINDER: 0 - 2; 1 - 3; 2 - 21; 3 - 20; 4 - 19; 5 - 18; but for I2C 21 & 20 pins are used ! therefore int2 & int3 couldn't be used
-  attachInterrupt(4, Start_function, RISING); // start_btn
-  attachInterrupt(0, Pause_function, RISING); // cut_command
-  attachInterrupt(1, Recharge_function, RISING); // reverse_command
+  attachInterrupt(4, Start_function, CHANGE); // start_btn change RISING to CHANGE
+  attachInterrupt(0, Pause_function, CHANGE); // cut_command
+  attachInterrupt(1, Recharge_function, CHANGE); // reverse_command
   // attachInterrupt(5, RESERVE_FUNCTION, RISING): // <----- R E S E R V E
 
   // Init LCD:
@@ -253,14 +253,11 @@ void loop() {
               stepper2.setSpeed(600);
               stepper2.runSpeed();
             }
-
             if (((act_time - start_time) >= shift_2) && ((act_time - start_time) < shift_3)) {
               stepper3.setSpeed(50);
               stepper3.runSpeed();
             }
-
             if ((act_time - start_time) >= shift_3) {
-
               stepper3.setSpeed(-50);
               stepper3.runSpeed();
             }
@@ -334,21 +331,3 @@ void loop() {
   }
 }
 
-/* add to interrrupts:
-   void setup() {
-  // прерывание на D2 (UNO/NANO)
-  attachInterrupt(0, isr, CHANGE);
-}
-volatile uint32_t debounce;
-void isr() {
-  // оставим 100 мс таймаут на гашение дребезга
-  // CHANGE не предоставляет состояние пина, 
-  // придётся узнать его при помощи digitalRead
-  if (millis() - debounce >= 100 && digitalRead(2)) {
-    debounce = millis();
-    // ваш код по прерыванию по высокому сигналу
-  }
-}
-void loop() {
-}
- */
