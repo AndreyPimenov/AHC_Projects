@@ -48,7 +48,7 @@ Button btn_liner(40);
 Button btn_locker(42);  // <----- R E S E R V E
 
 // Block of the variables:
-// int freq = 4000;
+int freq = 4000;
 volatile bool stop_flg = false; //
 volatile bool recharge_flg = false;
 volatile bool start_flg = false;
@@ -58,8 +58,8 @@ bool primer_flg = false;
 int start_time = 0;
 int act_time = 0; // Act the pump
 int shift_1 = 800;  // 800ms from position A to Start small stepper
-int shift_2 = 400;  // 500ms from Position A to Start primer pump
-int shift_3 = 2400; // 2400ms from Position A to Stop primer pump
+int shift_2 = 200;  // 500ms from Position A to Start primer pump
+int shift_3 = 2800; // 2400ms from Position A to Stop primer pump
 
 // Function block:
 // This is Pause_function
@@ -186,8 +186,8 @@ void loop() {
     }*/
 
   // C H E C K I N G _ T H E _ S T E P P E R _ S Y S T E M (just change the number of the motor exept the 1st one)
-  // stepper3.setSpeed(600);
-  // stepper3.runSpeed();
+  //stepper2.setSpeed(600);
+  //stepper2.runSpeed();
 
   // C H E C K I N G _ T H E _ P N E U M A T I C _ S Y S T E M
   /*
@@ -231,7 +231,6 @@ void loop() {
 
   // T H E _ M A I N :
 
-
   // ---------------------- A L A R M ------State:
 
   if (alarm_flg == true) {
@@ -255,12 +254,12 @@ void loop() {
       stepper1.setSpeed(3000);
       stepper1.runSpeed();
 
-      /*
-            if ((act_time - start_time) >= shift_1) {
-              stepper2.setSpeed(600);
-              stepper2.runSpeed();
-            }
-      */
+
+      if ((act_time - start_time) >= shift_1) {
+        stepper2.setSpeed(600);
+        stepper2.runSpeed();
+      }
+
 
       if (((act_time - start_time) >= shift_2) && ((act_time - start_time) < shift_3) && (primer_flg == false)) {
         //stepper3.setSpeed(50);
@@ -278,7 +277,7 @@ void loop() {
 
     }
 
-    if ((btn_drive_pos_b.isPressed() == 1) /*&& (btn_breaker.isPressed() == 1) && (btn_raker.isPressed() == 1)*/) {
+    if ((btn_drive_pos_b.isPressed() == 1) /*&& (btn_breaker.isPressed() == 1) && (btn_raker.isPressed() == 1)*/ ) {
       //led_pause.off(); // here primer is closed;
 
       delay(500); pa_pusher.on(); delay(500);
@@ -347,4 +346,6 @@ void loop() {
     //start_flg = true;
 
   }
+
 }
+
