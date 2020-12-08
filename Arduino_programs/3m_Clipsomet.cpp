@@ -35,7 +35,7 @@ Pneumatic pa_pusher(52);
 Pneumatic pa_raker(50);
 Pneumatic pa_breaker(48);
 Pneumatic pa_cutter(46);
-Pneumatic pa_primer(44); // <----- R E S E R V E
+Pneumatic pa_primer(30); // <----- R E S E R V E 44
 
 Button btn_drive_pos_a(34);
 Button btn_drive_pos_b(35);
@@ -48,12 +48,13 @@ Button btn_liner(40);
 Button btn_locker(42);  // <----- R E S E R V E
 
 // Block of the variables:
-int freq = 4000;
+// int freq = 4000;
 volatile bool stop_flg = false; //
 volatile bool recharge_flg = false;
 volatile bool start_flg = false;
-volatile uint32_t debounce;
+volatile uint32_t int_debounce;
 bool alarm_flg = false;
+bool primer_flg = false;
 int start_time = 0;
 int act_time = 0; // Act the pump
 int shift_1 = 800;  // 800ms from position A to Start small stepper
@@ -63,8 +64,8 @@ int shift_3 = 2400; // 2400ms from Position A to Stop primer pump
 // Function block:
 // This is Pause_function
 void Pause_function() {
-  if (millis() - debounce >= 20 && digitalRead(2) ) {
-    debounce = millis();
+  if (millis() - int_debounce >= 100 && digitalRead(2) ) {
+    int_debounce = millis();
     if (alarm_flg == false) {
       stop_flg = true;
       start_flg = false;
@@ -75,8 +76,8 @@ void Pause_function() {
 
 // This is Recharge_function
 void Recharge_function() {
-  if (millis() - debounce >= 20 && digitalRead(3)  ) {
-    debounce = millis();
+  if (millis() - int_debounce >= 120 && digitalRead(3)  ) {
+    int_debounce = millis();
     if (alarm_flg == false) {
       stop_flg = false;
       start_flg = false;
@@ -86,8 +87,8 @@ void Recharge_function() {
 }
 
 void Start_function() {
-  if (millis() - debounce >= 20 && digitalRead(19) ) {
-    debounce = millis();
+  if (millis() - int_debounce >= 150 && digitalRead(19) ) {
+    int_debounce = millis();
     if (alarm_flg == false) {
       stop_flg = false;
       start_flg = true;
@@ -100,9 +101,13 @@ byte Alarm_function() {
   byte code = 0b00000000;
   // Possible Alarm Situations:
   // 01 - time to moving extern the limits:
-  //if ("false") { code += 0x10000; }
+  if ("false") {
+    code += 0x10000;
+  }
   // 02 - breaker moves down before start is pressed - therefore moving is not possible:
-  //if ("false") { code += 0x01000; }
+  if ("false") {
+    code += 0x01000;
+  }
 
   // 02 - there is no KLD in the box:
   if (btn_cheker.isPressed() == false) {
@@ -115,6 +120,7 @@ byte Alarm_function() {
   }
 
   // 04 - lock is opened:
+
   if (btn_locker.isPressed() == false) {
     code += 0b00000001;
   }
@@ -125,7 +131,7 @@ byte Alarm_function() {
 
 void setup() {
   srv.attach(5);
-  
+
   pinMode(step_pin, OUTPUT);
   pinMode(dir_pin, OUTPUT);
 
@@ -189,7 +195,7 @@ void loop() {
     pa_raker.on();   delay (1000);    pa_raker.off();   delay(1000);
     pa_breaker.on(); delay (1000);    pa_breaker.off(); delay(1000);
     pa_cutter.on();  delay (1000);    pa_cutter.off();  delay(1000);
-    pa_liner.on();   delay (1000);    pa_liner.off();   delay(1000);
+    pa_primer.on();   delay (1000);    pa_primer.off();   delay(1000);
   */
 
   // C O M P L E X _ C H E C K _ ( _ L C D _  & _ B T N S _)
@@ -227,6 +233,7 @@ void loop() {
 
 
   // ---------------------- A L A R M ------State:
+
   if (alarm_flg == true) {
     led_alarm.on();
     lcd.clear();
@@ -253,15 +260,22 @@ void loop() {
               stepper2.setSpeed(600);
               stepper2.runSpeed();
             }
-            if (((act_time - start_time) >= shift_2) && ((act_time - start_time) < shift_3)) {
-              stepper3.setSpeed(50);
-              stepper3.runSpeed();
-            }
-            if ((act_time - start_time) >= shift_3) {
-              stepper3.setSpeed(-50);
-              stepper3.runSpeed();
-            }
       */
+
+      if (((act_time - start_time) >= shift_2) && ((act_time - start_time) < shift_3) && (primer_flg == false)) {
+        //stepper3.setSpeed(50);
+        //stepper3.runSpeed();
+        pa_primer.on();
+        primer_flg = true;
+      }
+      if (((act_time - start_time) >= shift_3) && (primer_flg == true) ) {
+        //stepper3.setSpeed(-50);
+        //stepper3.runSpeed();
+        pa_primer.off();
+        primer_flg = false;
+
+      }
+
     }
 
     if ((btn_drive_pos_b.isPressed() == 1) /*&& (btn_breaker.isPressed() == 1) && (btn_raker.isPressed() == 1)*/) {
@@ -270,13 +284,14 @@ void loop() {
       delay(500); pa_pusher.on(); delay(500);
       pa_breaker.on();
 
-      // Fast breaker on is here:
       delay(100); pa_breaker.off();
       delay(500); pa_raker.on(); delay(500);
-      //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Servodvigatel postavit suda
-      
-      for (pos = 170 ; pos >= 135; pos -= 1) {srv.write(pos); delay(15);}
-      
+
+      for (pos = 170 ; pos >= 135; pos -= 1) {
+        srv.write(pos);
+        delay(15);
+      }
+
 
     }
     led_drive.off();
@@ -292,7 +307,7 @@ void loop() {
 
 
     if (btn_raker.isPressed() == 1) {
-      pa_cutter.on(); delay(200); pa_cutter.off();  // ---------------------------------------------- CHECK IT
+      pa_cutter.on(); delay(200); pa_cutter.off();
     }
 
     led_pause.off();
@@ -307,22 +322,25 @@ void loop() {
 
   if (recharge_flg == true) {
     led_drive.on();
-    lcd.setCursor(0, 1); lcd.outStr("   НАЗАД НАЖАТ ");
+    lcd.setCursor(0, 1); lcd.outStr("   НАЗАД НАЖАТ  ");
     // btn_breaker.update();
 
     if ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 0)) {
       pa_pusher.off();
       pa_raker.off();
-      for (pos = 135; pos <= 170; pos += 1) {srv.write(pos); delay(15);}
+      for (pos = 135; pos <= 170; pos += 1) {
+        srv.write(pos);
+        delay(15);
+      }
     }
 
     while (btn_drive_pos_a.isPressed() == 0) {
       stepper1.setSpeed(-3000);
       stepper1.runSpeed();
-      
+
     }
-    
-   
+
+
     btn_drive_pos_b.update();
     led_drive.off();
     recharge_flg = false;
@@ -330,4 +348,3 @@ void loop() {
 
   }
 }
-
