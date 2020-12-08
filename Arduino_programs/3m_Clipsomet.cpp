@@ -1,3 +1,4 @@
+
 #include <AccelStepper.h>
 #include "LED.h"
 #include "Button.h"
@@ -261,11 +262,11 @@ void loop() {
         stepper2.runSpeed();
       }
       
-      if (((act_time - start_time) >= 200) && (breaker_flg == false)) {
+      if (((act_time - start_time) >= 400) && ((act_time - start_time) < 490) && (breaker_flg == false) && (btn_drive_pos_b.isPressed() == 0)    ) {
         pa_breaker.on();
         breaker_flg = true;
       }
-      if (((act_time - start_time) >= 250) && (breaker_flg == true) ) {
+      if (((act_time - start_time) >= 500) && ((act_time - start_time) < 600) && (breaker_flg == true)  && (btn_drive_pos_b.isPressed() == 0)    ) {
         pa_breaker.off();
         breaker_flg = false;
 
@@ -293,9 +294,8 @@ void loop() {
       //led_pause.off(); // here primer is closed;
 
       delay(500); pa_pusher.on(); delay(500);
-      pa_breaker.on();
-
-      delay(100); pa_breaker.off();
+      //pa_breaker.on();
+      //delay(100); pa_breaker.off();
       delay(500); pa_raker.on(); delay(500);
 
       for (pos = 170 ; pos >= 135; pos -= 1) {
@@ -307,6 +307,7 @@ void loop() {
     }
     led_drive.off();
     start_flg = false;
+    
     //stop_flg = true;
   }
 
