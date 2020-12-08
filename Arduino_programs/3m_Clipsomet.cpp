@@ -1,3 +1,4 @@
+
 #include <AccelStepper.h>
 #include "LED.h"
 #include "Button.h"
@@ -55,6 +56,7 @@ volatile bool start_flg = false;
 volatile uint32_t int_debounce;
 bool alarm_flg = false;
 bool primer_flg = false;
+bool breaker_flg = false;
 int start_time = 0;
 int act_time = 0; // Act the pump
 int shift_1 = 800;  // 800ms from position A to Start small stepper
@@ -249,7 +251,7 @@ void loop() {
     lcd.setCursor(0, 1); lcd.outStr("   СТАРТ НАЖАТ  ");
     start_time = millis();
 
-    while ((btn_drive_pos_b.isPressed() == 0) && (btn_breaker.isPressed() == 0) && (btn_raker.isPressed() == 0) && (btn_pusher.isPressed() == 1)) {
+    while ((btn_drive_pos_b.isPressed() == 0) /*&& (btn_breaker.isPressed() == 0)*/ && (btn_raker.isPressed() == 0) && (btn_pusher.isPressed() == 1)) {
       act_time = millis();
       stepper1.setSpeed(3000);
       stepper1.runSpeed();
@@ -259,6 +261,17 @@ void loop() {
         stepper2.setSpeed(600);
         stepper2.runSpeed();
       }
+      
+      if (((act_time - start_time) >= 400) && ((act_time - start_time) < 490) && (breaker_flg == false) && (btn_drive_pos_b.isPressed() == 0)    ) {
+        pa_breaker.on();
+        breaker_flg = true;
+      }
+      if (((act_time - start_time) >= 500) && ((act_time - start_time) < 600) && (breaker_flg == true)  && (btn_drive_pos_b.isPressed() == 0)    ) {
+        pa_breaker.off();
+        breaker_flg = false;
+
+      }
+
 
 
       if (((act_time - start_time) >= shift_2) && ((act_time - start_time) < shift_3) && (primer_flg == false)) {
@@ -281,9 +294,8 @@ void loop() {
       //led_pause.off(); // here primer is closed;
 
       delay(500); pa_pusher.on(); delay(500);
-      pa_breaker.on();
-
-      delay(100); pa_breaker.off();
+      //pa_breaker.on();
+      //delay(100); pa_breaker.off();
       delay(500); pa_raker.on(); delay(500);
 
       for (pos = 170 ; pos >= 135; pos -= 1) {
@@ -295,6 +307,7 @@ void loop() {
     }
     led_drive.off();
     start_flg = false;
+    
     //stop_flg = true;
   }
 
