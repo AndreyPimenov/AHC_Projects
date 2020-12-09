@@ -1,4 +1,3 @@
-
 #include <AccelStepper.h>
 #include "LED.h"
 #include "Button.h"
@@ -49,7 +48,7 @@ Button btn_liner(40);
 Button btn_locker(42);  // <----- R E S E R V E
 
 // Block of the variables:
-int freq = 4000;
+// int freq = 4000;
 volatile bool stop_flg = false; //
 volatile bool recharge_flg = false;
 volatile bool start_flg = false;
@@ -110,25 +109,20 @@ byte Alarm_function() {
   if ("false") {
     code += 0x01000;
   }
-
-  // 02 - there is no KLD in the box:
+  // 03 - there is no KLD in the box:
   if (btn_cheker.isPressed() == false) {
     code += 0b00000100;
   }
-
-  // 03 - liner is finished:
+  // 04 - liner is finished:
   if (btn_liner.isPressed() == false) {
     code += 0b00000010;
   }
-
-  // 04 - lock is opened:
+  // 05 - lock is opened:
   if (btn_locker.isPressed() == false) {
     code += 0b00000001;
   }
-
   return code;
 }
-
 
 void setup() {
   srv.attach(5);
@@ -201,33 +195,15 @@ void loop() {
 
   // C O M P L E X _ C H E C K _ ( _ L C D _  & _ B T N S _)
   /*
-    if (btn_drive_pos_a.isPressed()) {
-    Serial.println("Pos A"); lcd.setCursor(0, 1); lcd.outStr("Положение А     "); delay (1000);
-    }
-    if (btn_drive_pos_b.isPressed()) {
-    Serial.println("Pos B"); lcd.setCursor(0, 1); lcd.outStr("Положение Б     "); delay (1000);
-    }
-    if (btn_cheker.isPressed())     {
-    Serial.println("Check"); lcd.setCursor(0, 1); lcd.outStr("КЛД в магазине  "); delay (1000);
-    }
-    if (btn_breaker.isPressed())    {
-    Serial.println("Break"); lcd.setCursor(0, 1); lcd.outStr("Выбиватель дома "); delay (1000);
-    }
-    if (btn_raker.isPressed())      {
-    Serial.println("Raker");  lcd.setCursor(0, 1); lcd.outStr("Гребенка дома   "); delay (1000);
-    }
-    if (btn_cutter.isPressed())     {
-    Serial.println("Cuter"); lcd.setCursor(0, 1); lcd.outStr("Резак дома      "); delay(1000);
-    }
-    if (btn_pusher.isPressed())     {
-    Serial.println("Pusher");  lcd.setCursor(0, 1); lcd.outStr("Толкатель дома  "); delay(1000);
-    }
-    if (btn_liner.isPressed())      {
-    Serial.println("Liner"); lcd.setCursor(0, 1); lcd.outStr("Лента заправлена"); delay(1000);
-    }
-    if (btn_locker.isPressed())     {
-    Serial.println("Locker"); lcd.setCursor(0, 1); lcd.outStr("Дверца закрыта  "); delay(1000);
-    }
+    if (btn_drive_pos_a.isPressed()) {Serial.println("Pos A"); lcd.setCursor(0, 1); lcd.outStr("Положение А     "); delay (1000);}
+    if (btn_drive_pos_b.isPressed()) {Serial.println("Pos B"); lcd.setCursor(0, 1); lcd.outStr("Положение Б     "); delay (1000);}
+    if (btn_cheker.isPressed())      {Serial.println("Check"); lcd.setCursor(0, 1); lcd.outStr("КЛД в магазине  "); delay (1000);}
+    if (btn_breaker.isPressed())     {Serial.println("Break"); lcd.setCursor(0, 1); lcd.outStr("Выбиватель дома "); delay (1000);}
+    if (btn_raker.isPressed())       {Serial.println("Raker");  lcd.setCursor(0, 1); lcd.outStr("Гребенка дома   "); delay (1000);}
+    if (btn_cutter.isPressed())      {Serial.println("Cuter"); lcd.setCursor(0, 1); lcd.outStr("Резак дома      "); delay(1000);}
+    if (btn_pusher.isPressed())      {Serial.println("Pusher");  lcd.setCursor(0, 1); lcd.outStr("Толкатель дома  "); delay(1000);}
+    if (btn_liner.isPressed())       {Serial.println("Liner"); lcd.setCursor(0, 1); lcd.outStr("Лента заправлена"); delay(1000);}
+    if (btn_locker.isPressed())      {Serial.println("Locker"); lcd.setCursor(0, 1); lcd.outStr("Дверца закрыта  "); delay(1000);}
   */
 
   // T H E _ M A I N :
@@ -238,11 +214,9 @@ void loop() {
     led_alarm.on();
     lcd.clear();
     lcd.setCursor(0, 0); lcd.outStr(" О Ш И Б К А ");
-
     lcd.setCursor(0, 1); lcd.print(Alarm_function());
     delay(3000);
   }
-
 
   // ---------------------- S T A R T ------State:
   if (start_flg == true) {
@@ -254,7 +228,6 @@ void loop() {
       act_time = millis();
       stepper1.setSpeed(3000);
       stepper1.runSpeed();
-
 
       if ((act_time - start_time) >= shift_1) {
         stepper2.setSpeed(600);
@@ -293,8 +266,6 @@ void loop() {
     }
     led_drive.off();
     start_flg = false;
-    
-    //stop_flg = true;
   }
 
   // ---------------------- C U T T E R ------ State:
@@ -313,19 +284,17 @@ void loop() {
 
 
 
-
   // ---------------------- M O V E _ B A C K ------ State:
 
   if (recharge_flg == true) {
     led_drive.on();
     lcd.setCursor(0, 1); lcd.outStr("   НАЗАД НАЖАТ  ");
 
-    while ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 0)) { // if
+    if ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 0)) { // if
       pa_pusher.off();
       pa_raker.off();
       for (pos = 135; pos <= 170; pos += 1) {
         srv.write(pos);
-        delay(10); //15
       }
     }
 
