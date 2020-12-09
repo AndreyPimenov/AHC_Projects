@@ -122,7 +122,6 @@ byte Alarm_function() {
   }
 
   // 04 - lock is opened:
-
   if (btn_locker.isPressed() == false) {
     code += 0b00000001;
   }
@@ -145,7 +144,7 @@ void setup() {
   pinMode (dir_pump, OUTPUT);
   digitalWrite(dir_pump, HIGH);
 
-  stepper1.setMaxSpeed(6000.0);
+  stepper1.setMaxSpeed(8000.0);
   stepper1.setAcceleration(200.0);
 
   stepper2.setMaxSpeed(2000.0);
@@ -272,38 +271,25 @@ void loop() {
 
       }
 
-
-
       if (((act_time - start_time) >= shift_2) && ((act_time - start_time) < shift_3) && (primer_flg == false)) {
-        //stepper3.setSpeed(50);
-        //stepper3.runSpeed();
         pa_primer.on();
         primer_flg = true;
       }
       if (((act_time - start_time) >= shift_3) && (primer_flg == true) ) {
-        //stepper3.setSpeed(-50);
-        //stepper3.runSpeed();
         pa_primer.off();
         primer_flg = false;
-
       }
-
     }
 
     if ((btn_drive_pos_b.isPressed() == 1) /*&& (btn_breaker.isPressed() == 1) && (btn_raker.isPressed() == 1)*/ ) {
-      //led_pause.off(); // here primer is closed;
-
-      delay(500); pa_pusher.on(); delay(500);
-      //pa_breaker.on();
-      //delay(100); pa_breaker.off();
-      delay(500); pa_raker.on(); delay(500);
+      
+      pa_pusher.on(); delay(150);
+      pa_raker.on(); delay(150);
 
       for (pos = 170 ; pos >= 135; pos -= 1) {
         srv.write(pos);
         delay(15);
       }
-
-
     }
     led_drive.off();
     start_flg = false;
@@ -317,14 +303,12 @@ void loop() {
     led_pause.on();
     lcd.setCursor(0, 1); lcd.outStr("   РЕЗАК НАЖАТ  ");
 
-
     if (btn_raker.isPressed() == 1) {
       pa_cutter.on(); delay(200); pa_cutter.off();
     }
 
     led_pause.off();
     stop_flg = false;
-    //recharge_flg = true;
   }
 
 
@@ -335,29 +319,22 @@ void loop() {
   if (recharge_flg == true) {
     led_drive.on();
     lcd.setCursor(0, 1); lcd.outStr("   НАЗАД НАЖАТ  ");
-    // btn_breaker.update();
 
-    if ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 0)) {
+    while ((btn_drive_pos_b.isPressed() == 1) && (btn_breaker.isPressed() == 0)) { // if
       pa_pusher.off();
       pa_raker.off();
       for (pos = 135; pos <= 170; pos += 1) {
         srv.write(pos);
-        delay(15);
+        delay(10); //15
       }
     }
 
     while (btn_drive_pos_a.isPressed() == 0) {
-      stepper1.setSpeed(-3000);
+      stepper1.setSpeed(-6000); //3000
       stepper1.runSpeed();
-
     }
-
-
     btn_drive_pos_b.update();
     led_drive.off();
     recharge_flg = false;
-    //start_flg = true;
-
   }
-
 }
