@@ -20,8 +20,8 @@ void setup() {
   pinMode(dir_main, OUTPUT);
   digitalWrite(dir_main, HIGH);
 
-  stepper1.setMaxSpeed(6000.0);    //
-  stepper1.setAcceleration(2000.0); //
+  stepper1.setMaxSpeed(3200.0);    //
+  stepper1.setAcceleration(3200.0); //
   
   // F O R _ D E B U G G I N G:
   // Serial.begin(9600);
@@ -33,7 +33,7 @@ void loop() {
 //stepper1.setSpeed(600);
 //stepper1.runSpeed();
 
-point = stepper1.currentPosition() + 1600 ; // << ---- CHANGE DISTANCE HERE. where 1000 steps
+point = stepper1.currentPosition() + 1600 ; // << ---- CHANGE DISTANCE HERE. where 1600 steps
 stepper1.moveTo(point);
 
 while (stepper1.distanceToGo() != 0){
