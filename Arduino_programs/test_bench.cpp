@@ -11,7 +11,7 @@ AccelStepper stepper1(AccelStepper::DRIVER, step_main, dir_main);
 Pneumatic pa_first(8);
 Pneumatic pa_second(7); // << --------- RESERVE
 
-// Block of the variables:
+// Block of variables:
 int point = 0;
 bool state_flag = 0;
 unsigned long start_time; 
@@ -44,18 +44,18 @@ void loop() {
 //stepper1.setSpeed(600);
 //stepper1.runSpeed();
 
-point = stepper1.currentPosition() + 140 ; // << ---- CHANGE DISTANCE HERE. where 1600 steps
+point = stepper1.currentPosition() + 140 ; // << ---- CHANGE DISTANCE HERE. where 1600 steps is half. 140 for gofr
 stepper1.moveTo(point);
 
 while (stepper1.distanceToGo() != 0){
   stepper1.run();
   }
 
-milsec_pause(300); 
+//milsec_pause(100); 
 
 
 // C H E C K I N G _ T H E _ P N E U M A T I C _ S Y S T E M 
-if (stepper1.currentPosition() == point){
+//if (stepper1.currentPosition() == point){
 
   if (state_flag == 1){
      pa_first.on();  //delay (1000);
@@ -67,6 +67,6 @@ if (stepper1.currentPosition() == point){
     milsec_pause(300);
     }
   state_flag = !state_flag; 
-  }
+  //}
   
 }
