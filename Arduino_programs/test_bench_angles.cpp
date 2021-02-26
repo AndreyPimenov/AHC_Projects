@@ -85,3 +85,13 @@ pa_first.off();
 milsec_pause(200);
 
 }
+
+rotation_function(140, 1, 1, 200);
+
+
+pa_first.on();
+milsec_pause(200);
+
+//rotation_function(140, 1, 2, 100);
+pa_first.off(); 
+milsec_pause(200);
