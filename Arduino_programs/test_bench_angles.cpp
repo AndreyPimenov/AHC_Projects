@@ -4,7 +4,7 @@
 #define step_main 10
 #define dir_main 11
 
-//AccelStepper stepper1(AccelStepper::DRIVER, step_main, dir_main);
+AccelStepper stepper1(AccelStepper::DRIVER, step_main, dir_main);
 
 Pneumatic pa_first(8);
 
@@ -48,8 +48,10 @@ void setup() {
   pinMode(dir_main, OUTPUT);
   digitalWrite(dir_main, HIGH);
 
- // stepper1.setMaxSpeed(6400.0);    
- // stepper1.setAcceleration(6400.0); 
+  pinMode(7, OUTPUT);
+
+ stepper1.setMaxSpeed(6400.0);    
+ stepper1.setAcceleration(6400.0); 
   
 }
 
@@ -76,12 +78,37 @@ while (stepper1.distanceToGo() != 0){
 */
 // ВОТ И ВЕСЬ КОД:
 
-rotation_function(140, 1, 2, 100);
-pa_first.on();
-milsec_pause(200);
+delay (100);
+//rotation_function(160, 1, 2, 200); //140
+point = stepper1.currentPosition() + 140 ; // << ---- CHANGE DISTANCE HERE. where 1600 steps is half. 140 for gofr
+stepper1.moveTo(point);
 
-rotation_function(140, 1, 2, 100);
-pa_first.off(); 
-milsec_pause(200);
+while (stepper1.currentPosition() != point) { 
+  stepper1.run();
+  }
 
+delay (100);
+
+
+if (pa_first.state_return() == true){
+  pa_first.off(); 
+  delay(500);
+}
+
+else{
+  pa_first.on();
+  delay(500);
+  }
+delay(200);
+
+//pa_first.on();
+//milsec_pause(200);
+//delay (200);
+
+//rotation_function(140, 1, 2, 300);
+//delay(100);
+
+//pa_first.off(); 
+//milsec_pause(200);
+//delay(200);
 }
