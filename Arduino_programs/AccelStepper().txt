@@ -1,0 +1,25 @@
+Описание команд библиотеки AccelStepper.h
+AccelStepper mystepper(DRIVER, step, direction);// Шаговый двигатель, управляемый платой
+AccelStepper mystepper(FULL2WIRE, pinA, pinB);// Шаговый двигатель, управляемый Н-мостом
+AccelStepper mystepper(FULL4WIRE, pinA1, pinA2, pinB1, pinB2);// Униполярный двигатель
+
+mystepper.setMaxSpeed(stepsPerSecond);// Установка скорости оборотов в минуту
+mystepper.setSpeed(stepsPerSecond);// Установка скорости в шагах за секунду
+mystepper.setAcceleration(stepsPerSecondSquared);// Установка ускорения
+
+mystepper.currentPosition(); // Возвращает текущее положение в шагах
+mystepper.setCurrentPosition (long position); Обнуляет текущую позицию до нуля
+mystepper.targetPosition(); // Конечное положение в шагах
+mystepper.distanceToGo(); // Вернуть расстояние до указанного положения
+mystepper.moveTo(long absolute); // Переместиться в абсолютно указанное положение
+mystepper.move(long relative); // Переместиться в относительно указанное положение
+
+mystepper.run(); // Начать движение с ускорением, функцию следует вызывать повторно
+mystepper.runToPosition(); // Начать движение до указанной точки
+mystepper.runToNewPosition(); // Начать движение с ускорением до заданной позиции
+mystepper.stop(); // Максимально быстрая остановка (без замедления)
+mystepper.runSpeed(); // Начать движение с заданной скоростью без плавного ускорения
+mystepper.runSpeedToPosition(); // Начать движение без плавного ускорения, до позиции
+
+mystepper.disableOutputs(); // Деактивирует зарезервированные пины и устанавивает их в режим LOW. Снимает напряжение с обмоток двигателя, экономя энергию
+mystepper.enableOutputs(); // Активирует зарезервированные пины и устанавивает их в режим OUTPUT. Вызывается автоматически при запуске двигателя
