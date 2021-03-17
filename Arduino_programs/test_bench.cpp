@@ -1,72 +1,66 @@
 #include <AccelStepper.h>
 #include "Pneumatic.h"
-
-// main driver
 #define step_main 10
 #define dir_main 11
-
-// Create objects:
 AccelStepper stepper1(AccelStepper::DRIVER, step_main, dir_main);
-
 Pneumatic pa_first(8);
-Pneumatic pa_second(7); // << --------- RESERVE
 
-// Block of variables:
+// -------------------------- Block of variables:
 int point = 0;
 bool state_flag = 0;
 unsigned long start_time; 
 
-// Block of functions:
+
+// -------------------------- Block of functions:
 void milsec_pause(int delta){
   int timing;
   timing = millis();
-  while (millis() < (timing + delta) ){  
-  
- };
-  }
+  while (millis() < (timing + delta) ){ 
+    pa_first.state_return();
+    };
+  pa_first.state_return();
+}
 
 void setup() {
-
-  pinMode(step_main, OUTPUT);
-  pinMode(dir_main, OUTPUT);
-  digitalWrite(dir_main, HIGH);
-
-  stepper1.setMaxSpeed(6400.0);    
-  stepper1.setAcceleration(6400.0); 
-  
-  // F O R _ D E B U G G I N G:
-  // Serial.begin(9600);
+ stepper1.setSpeed(-64000.0);    
+ stepper1.setAcceleration(-64000.0); 
+ Serial.begin(115200);  
 }
 
 void loop() {
 
-// C H E C K I N G _ T H E _ S T E P P E R _ S Y S T E M 
-//stepper1.setSpeed(600);
-//stepper1.runSpeed();
+point = stepper1.currentPosition() - 640 ; 
+stepper1.move(point);
 
-point = stepper1.currentPosition() + 140 ; // << ---- CHANGE DISTANCE HERE. where 1600 steps is half. 140 for gofr
-stepper1.moveTo(point);
-
-while (stepper1.distanceToGo() != 0){
+while (stepper1.currentPosition() != point) { 
   stepper1.run();
   }
+point = 0;
+stepper1.setCurrentPosition (0);
 
-//milsec_pause(100); 
+delay (100);
 
-
-// C H E C K I N G _ T H E _ P N E U M A T I C _ S Y S T E M 
-//if (stepper1.currentPosition() == point){
-
-  if (state_flag == 1){
-     pa_first.on();  //delay (1000);
-     //start_time = millis()
-     milsec_pause(300); 
-    }
-  else if (state_flag == 0){ 
-    pa_first.off();  //delay (1000); 
-    milsec_pause(300);
-    }
-  state_flag = !state_flag; 
-  //}
+if (pa_first.state_return() == true){
+  pa_first.off(); 
+  delay(50);
   
+  Serial.print(pa_first.state_return());
+  
+  delay(50);
+  Serial.println(stepper1.currentPosition());
+  delay(50);
+}
+
+else{
+  pa_first.on();
+  delay(50);
+ 
+  Serial.print(pa_first.state_return());
+  
+  delay(50);
+  Serial.println(stepper1.currentPosition());
+  delay(50);
+  }
+delay(50);
+
 }
