@@ -1,0 +1,88 @@
+#include <AccelStepper.h>
+#include "Pneumatic.h"
+#define step_main 10
+#define dir_main 11
+AccelStepper stepper1(AccelStepper::DRIVER, step_main, dir_main);
+Pneumatic pa_first(12);
+
+
+// -------------------------- Block of variables:
+int point = 0;
+bool state_flag = 0;
+unsigned long start_time; 
+
+
+// -------------------------- Block of functions:
+void milsec_pause(int delta){
+  int timing;
+  timing = millis();
+  while (millis() < (timing + delta) ){ 
+    pa_first.state_return();
+    };
+  timing = 0;  
+  pa_first.state_return();
+}
+
+void setup() {
+ //pinMode (12, OUTPUT);
+ stepper1.setSpeed(-64000.0);    
+ stepper1.setAcceleration(-64000.0); 
+ Serial.begin(115200);  
+}
+
+void loop() {
+
+
+point = stepper1.currentPosition() - 650 ; // было 640
+stepper1.move(point);
+
+while (stepper1.currentPosition() != point) { 
+  stepper1.run();
+  }
+//point = 0;
+stepper1.setCurrentPosition (0);
+
+delay (100);
+
+pa_first.state_return();
+
+if (pa_first.state_return() == true){
+  pa_first.off(); 
+  delay(250);
+  //milsec_pause (240);
+  
+  Serial.print(pa_first.state_return());
+  
+  delay(50);
+  //milsec_pause (60);
+  Serial.println(stepper1.currentPosition());
+  delay(50);
+  //milsec_pause (60);
+}
+
+else{
+  pa_first.on();
+  delay(250);
+  //milsec_pause (240);
+  Serial.print(pa_first.state_return());
+  
+  delay(50);
+  // milsec_pause (60);
+  Serial.println(stepper1.currentPosition());
+  delay(50);
+  // milsec_pause (60);
+  }
+delay(150);
+//milsec_pause (120);
+
+      
+                     
+                     // wait for a second
+                     
+//digitalWrite(12, HIGH);   // turn the LED on (HIGH is the voltage level)
+  //delay(300);  
+  //digitalWrite(12, LOW);    // turn the LED off by making the voltage LOW
+  //delay(300);
+
+
+}
