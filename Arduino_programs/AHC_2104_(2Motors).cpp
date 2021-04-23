@@ -121,3 +121,50 @@ stepper1.run();
   }
 }
 
+// ------------------------------------------------------ TESTING ONE:
+
+#include <AccelStepper.h>
+
+#define step_main 10
+#define dir_main 11
+#define step_rot 6 //9c
+#define dir_rot 5 //9b
+
+AccelStepper stepper1(AccelStepper::DRIVER, step_main, dir_main);
+AccelStepper stepper2(AccelStepper::DRIVER, step_rot, dir_rot);
+
+#define PIN_INPUT_PULLUP 3
+
+// -------------------------- Block of variables:
+bool callibration_flag = false;
+
+// -------------------------- Block of functions:
+void milsec_pause(int delta){
+  int timing;        timing = millis();
+  while (millis() < (timing + delta) ){ 
+    };
+}
+
+void setup() {
+ stepper1.setSpeed(-64000.0);  
+ stepper1.setAcceleration(-64000.0); 
+ stepper1.moveTo(-500000); 
+  
+ stepper2.setMaxSpeed(4000);
+ stepper2.setAcceleration(4000);
+ stepper2.moveTo(250); // <<<<<<<<<<<<<<<<<<<<<<<<<<<<< Change the angle of the 2nd stepper here
+
+ Serial.begin(115200);
+
+ pinMode(PIN_INPUT_PULLUP, INPUT_PULLUP);
+}
+
+void loop() {
+  
+int sensorVal = digitalRead(PIN_INPUT_PULLUP);
+Serial.print("End_effector: ");
+Serial.println(sensorVal);
+Serial.print("Callibration_flag: ");
+Serial.println(callibration_flag);
+delay(500);
+}
