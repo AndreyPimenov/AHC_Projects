@@ -54,8 +54,8 @@ void setup() {
 
  // Управление по положению также дало рассинхрон
  // 2й шаговый - управление по положению:
- stepper2.setSpeed(-20000);
- stepper2.setAcceleration(-4000);
+ stepper2.setSpeed(-40000);
+ stepper2.setAcceleration(-40000);
  stepper2.moveTo(angle_gofr);
 
  Serial.begin(115200);
