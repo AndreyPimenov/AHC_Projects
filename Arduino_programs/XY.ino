@@ -85,16 +85,16 @@ void loop() {
     if (mode_flag == 'a') {
         stepperY.setSpeed(200);
         stepperY.move(100);
-        while ((mode_flag == 'a') && (btn_drive_pos_Xb.isPressed() == 0)) { 
+        while ((mode_flag == 'a') && (btn_drive_pos_Xa.isPressed() == 0)) { 
             stepperX.setMaxSpeed(-6000);
             stepperX.setSpeed(-303);
             stepperX.runSpeed();
             Ydrive_bounce();
             
-        if (btn_drive_pos_Xb.isPressed() != 0){ break; }
+        if (btn_drive_pos_Xa.isPressed() != 0){ break; }
         }
         
-        mode_flag = 'b';
+        mode_flag = 'c';
         stepperY.setCurrentPosition(0);
         //
         milsec_pause(2000);
@@ -108,7 +108,7 @@ void loop() {
             }
         mode_flag = 'c';
         stepperY.setCurrentPosition(0);
-        achive_position_flag == false;
+        achive_position_flag = false;
         milsec_pause(2000);
     }
 
@@ -116,16 +116,18 @@ void loop() {
     if (mode_flag == 'c') {
         stepperY.setSpeed(200);
         stepperY.moveTo(100);
-        while ((mode_flag == 'с') && (btn_drive_pos_Xa.isPressed() != 0)) {
-             stepperX.setMaxSpeed(6000);
-             stepperX.setSpeed(303);
+        while ((mode_flag == 'с') && (btn_drive_pos_Xb.isPressed() == 0)) { 
+             Serial.print("I'm here");
+             /*
+             stepperX.setMaxSpeed(-6000);
+             stepperX.setSpeed(-303);
              stepperX.runSpeed();
-             Ydrive_bounce();
+             Ydrive_bounce();*/
 
-        if (btn_drive_pos_Xa.isPressed() == 0){ break; }
+       // if (btn_drive_pos_Xb.isPressed() != 0){ break; }
         }
 
-        mode_flag = 'd';
+        mode_flag = 'a';
         stepperY.setCurrentPosition(0);
         //
         milsec_pause(2000);
@@ -138,9 +140,9 @@ void loop() {
                Ydrive_shift(-200);
           }
 
-        mode_flag = 'b';
+        mode_flag = 'a';
         stepperY.setCurrentPosition(0);
-        //
+        achive_position_flag = false;
         milsec_pause(2000);
     }
     
