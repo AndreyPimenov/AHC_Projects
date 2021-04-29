@@ -85,16 +85,16 @@ void loop() {
     if (mode_flag == 'a') {
         stepperY.setSpeed(200);
         stepperY.move(100);
-        while ((mode_flag == 'a') && (btn_drive_pos_Xa.isPressed() == 0)) { 
-            stepperX.setMaxSpeed(-6000);
-            stepperX.setSpeed(-303);
+        while ((mode_flag == 'a') && (btn_drive_pos_Xb.isPressed() == 0)) { 
+            stepperX.setMaxSpeed(6000);
+            stepperX.setSpeed(303);
             stepperX.runSpeed();
             Ydrive_bounce();
             
-        if (btn_drive_pos_Xa.isPressed() != 0){ break; }
+        if (btn_drive_pos_Xb.isPressed() != 0){ break; }
         }
         
-        mode_flag = 'c';
+        mode_flag = 'b';
         stepperY.setCurrentPosition(0);
         //
         milsec_pause(2000);
@@ -115,22 +115,21 @@ void loop() {
     // The way from B to A:
     if (mode_flag == 'c') {
         stepperY.setSpeed(200);
-        stepperY.moveTo(100);
-        while ((mode_flag == 'с') && (btn_drive_pos_Xb.isPressed() == 0)) { 
-             Serial.print("I'm here");
-             /*
-             stepperX.setMaxSpeed(-6000);
-             stepperX.setSpeed(-303);
-             stepperX.runSpeed();
-             Ydrive_bounce();*/
-
-       // if (btn_drive_pos_Xb.isPressed() != 0){ break; }
+        stepperY.move(100);
+        while ((mode_flag == 'c') && (btn_drive_pos_Xa.isPressed() == 0)) { 
+            stepperX.setMaxSpeed(6000);
+            stepperX.setSpeed(303);
+            stepperX.runSpeed();
+            Ydrive_bounce();
+            
+        if (btn_drive_pos_Xa.isPressed() != 0){ break; }
         }
-
-        mode_flag = 'a';
+        
+        mode_flag = 'd';
         stepperY.setCurrentPosition(0);
         //
         milsec_pause(2000);
+        
     }
 
     // Small shift of the Y motor:
