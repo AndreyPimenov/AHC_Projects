@@ -1,62 +1,46 @@
-// Программа для анализа полученные от схемы даннных:
-// file_read.cpp: определяет точку входа для консольного приложения.
-// #include "stdafx.h"
+bool digitalReadFast(uint8_t pin); // быстрый опрос пина
 
-#include <fstream>
-#include <iostream>
-#include <string>
-
-using namespace std;
-
-float str_to_float (string line) {
-	/*
-		Данная функция преобразует строку из отчета в число 
-	*/
-	float result = (   (int(line[3]) - 48) * 10 + (int(line[4]) - 48) + (int(line[6]) - 48) *.1 + (int(line[7]) - 48) *.01 + (int(line[8]) - 48) * .001);
-	return result;
+void setup(){
+  Serial.begin(250000);   // 9600 115200 250000
+  pinMode(3, INPUT);
+  attachInterrupt(1, function, CHANGE); // LOW, FALLING - срез, RISING - фронт, CHANGE - изменение
 }
 
-// формирование динамического массива, для всех измерений
+volatile int counter = 0; // счетчик прерываний
+volatile bool flag = false;
+volatile uint32_t debounce;
 
-// поиск уникальных их должно быть 50 на 1 секунду
-
-
-
-int main(int argc, char* argv[])
-{
-	setlocale(LC_ALL, "rus"); 
-	char buff[50]; // буфер промежуточного хранения считываемого из файла текста
-	ifstream file_txt; 
-	string file_line;
-	file_txt.open("C:/Users/andrey.pimenov/Desktop/TSP_Detecting_Zero/delay-10.txt");
-
-	if (!file_txt.is_open()) // если файл не открыт
-		cout << "Файл не может быть открыт!\n"; // сообщить об этом
-	else
-	{
-		
-		/*
-		file_txt >> buff; // считали первое слово из файла
-		cout << buff << endl; 
-
-		file_txt.getline(buff, 50); // считали строку из файла
-		file_txt.close(); // закрываем файл
-		cout << buff << endl; // напечатали эту строку
-		*/
-
-		while (getline(file_txt, file_line))
-		{
-			string line = file_line.substr(3, 10);
-	
-			// cout << "initial" << line << '\n';
-			cout << str_to_float(line) << endl;
+bool digitalReadFast(uint8_t pin) {
+  if (pin < 8) {
+    return bitRead(PIND, pin);
+  } else if (pin < 14) {
+    return bitRead(PINB, pin - 8);
+  } else if (pin < 20) {
+    return bitRead(PINC, pin - 14);    // Return pin state
+  }
+}
 
 
-		}
-		file_txt.close();
+void function(){
+  // CHANGE не предоставляет состояния пина,придется узнать его при помощи digitalRead
 
-	}
+  if (micros() - debounce >= 40 && digitalReadFast(3)){
+     debounce = micros(); 
+     flag = true;
+     counter += 1;
+     
+  }
+}
 
-	system("pause");
-	return 0;
+void loop(){
+
+if (flag && (counter == 100) ){
+  
+  Serial.println("!");
+  flag = false;
+  counter = 0;
+  }
+
+
+
 }
