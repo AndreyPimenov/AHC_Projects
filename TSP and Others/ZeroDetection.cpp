@@ -1,14 +1,23 @@
+// Timer 0 Channel 1 = pin 5, Channel B = pin 6 
+#include "GyverTimers.h"
+
+// переменные, которые изменяют свое значение в прерывании - volatile
+volatile int counter = 0; // счетчик прерываний
+volatile bool signalStart = false;
+volatile bool flag = false;
+uint32_t debounce;
+int frequency = 25;
+
 bool digitalReadFast(uint8_t pin); // быстрый опрос пина
 
 void setup(){
+  pinMode(5, OUTPUT);
+  Timer0.setFrequency(frequency * 2);                  // настроить частоту таймера в Гц (умножаем на 2 из-за особенностей генерации меандра
+ 
   Serial.begin(250000);   // 9600 115200 250000
   pinMode(3, INPUT);
   attachInterrupt(1, function, CHANGE); // LOW, FALLING - срез, RISING - фронт, CHANGE - изменение
 }
-
-volatile int counter = 0; // счетчик прерываний
-volatile bool flag = false;
-volatile uint32_t debounce;
 
 bool digitalReadFast(uint8_t pin) {
   if (pin < 8) {
@@ -20,27 +29,28 @@ bool digitalReadFast(uint8_t pin) {
   }
 }
 
-
-void function(){
-  // CHANGE не предоставляет состояния пина,придется узнать его при помощи digitalRead
-
+void function(){ // CHANGE не предоставляет состояния пина,придется узнать его при помощи digitalReadFast
   if (micros() - debounce >= 40 && digitalReadFast(3)){
-     debounce = micros(); 
+     debounce = micros();
      flag = true;
-     counter += 1;
-     
+     signalStart = true;  // выставляем флаг
   }
 }
 
+
+
+
 void loop(){
 
-if (flag && (counter == 100) ){
+if (signalStart == true){ 
+    Timer0.start outputEnable(CHANNEL_B, HIGH);  
+}
+
+ISR(TIMER0_B) {
+  digitalWrite(5, HIGH);
+  signalStart = LOW;
+}
+  digitalWrite(5, LOW);
   
-  Serial.println("!");
-  flag = false;
-  counter = 0;
-  }
-
-
 
 }
