@@ -6,8 +6,8 @@
 volatile bool flg_ap_interrupt = false;   // прерывание состоялось 
 volatile bool flg_timer_allow = false;    // флаг разрешения на запуск таймера  
 int potentiometr_init = 0;                // считывание с аналогового канала
-int value1 = 0;  
-int interval = 0;                         // интервал отсчета таймера
+long value1 = 0;  
+long interval = 0;                         // интервал отсчета таймера
 uint32_t debounce; 
 
 // Функции: 
@@ -33,13 +33,13 @@ bool digitalReadFast(uint8_t pin) {
 void function(){ // CHANGE не предоставляет состояния пина,придется узнать его при помощи digitalReadFast
   
   if ((value1 > 51) && (value1 < 972) && (flg_ap_interrupt == false)){
-		flg_timer_allow = true;      // выставляем флаг, что можно запускать таймер
-		Serial.println("check");     // проверка на повторные срабатывания 
-		flg_ap_interrupt == true;    // выставляем флаг, что прерывание состоялось 
+    flg_timer_allow = true;      // выставляем флаг, что можно запускать таймер
+    Serial.println("2nd entering!");     // проверка на повторные срабатывания 
+    flg_ap_interrupt == true;    // выставляем флаг, что прерывание состоялось 
   
 }
-  esle {
-		Serial.println("empty enters");
+  else {
+    Serial.println("empty enters");
   }
   /*
   if ((micros() - debounce >= 20) && digitalReadFast(3) &&  !flg_ap_interrupt){
@@ -51,24 +51,29 @@ void function(){ // CHANGE не предоставляет состояния п
 }
 
 void loop(){
-	
+  
 value1 = analogRead(0);          // 0...1023 >>> 5% - 51, 95% - 972
 interval = value1 * 115;     // заменяем деление с точкой / 0.0087 и округление на умножение на целое
 
 while(flg_timer_allow){
-	
-	delay(2);
-	digitalWrite(5);
-    flg_ap_interrupt = false;
-	flg_timer_allow = false; 
-	// считаем время
-	// запускаем пин
-	// формируем меандр, мб через задержку
-	// перезапускаем флаги
+  Serial.print("interval = ");
+  Serial.println(interval);
+  uint16_t interval_ms = int (interval*0.001);
+  Serial.print("interval_ms = ");
+  Serial.println(interval_ms);
+  delay(interval_ms); // 8мс - 972 ............................1 мс - 51 
+  
+  digitalWrite(5, HIGH);
+  flg_ap_interrupt = false;
+  flg_timer_allow = false; 
+  delay(10); //10 ms
+  // считаем время
+  // запускаем пин
+  // формируем меандр, мб через задержку
+  // перезапускаем флаги
+  digitalWrite(5, LOW);
+  
 }
-
-
-
 
 
 }
