@@ -6,8 +6,8 @@
 volatile bool flg_ap_interrupt = false;   // прерывание состоялось 
 volatile bool flg_timer_allow = false;    // флаг разрешения на запуск таймера  
 int potentiometr_init = 0;                // считывание с аналогового канала
-long value1 = 0;  
-long interval = 0;                         // интервал отсчета таймера
+int value1 = 0;  
+int interval = 0;                         // интервал отсчета таймера
 uint32_t debounce; 
 
 // Функции: 
@@ -47,33 +47,31 @@ void function(){ // CHANGE не предоставляет состояния п
      flg_ap_interrupt = true;             // выставляем флаг, что прерывание состоялось (по этому флагу запрещаем второй вход в прерывание)
   }
   */
-  
 }
 
 void loop(){
   
-value1 = analogRead(0);          // 0...1023 >>> 5% - 51, 95% - 972
-interval = value1 * 115;     // заменяем деление с точкой / 0.0087 и округление на умножение на целое
+value1 = analogRead(0);            // 0...1023 >>> 5% - 51, 95% - 972, возьмем 8% - 82
+interval = int (value1 * 8.7);     // заменяем деление на 0.0087 (- цена деления) и дальнейшее округление до целого, на умножение на 8.7 мс
 
 while(flg_timer_allow){
+  // считаем время                 // запускаем пин
+  // формируем меандр, мб через задержку
+  // перезапускаем флаги
+  
   Serial.print("interval = ");
   Serial.println(interval);
-  uint16_t interval_ms = int (interval*0.001);
+  //uint16_t interval_ms = int (interval*0.001);
+  
   Serial.print("interval_ms = ");
-  Serial.println(interval_ms);
-  delay(interval_ms); // 8мс - 972 ............................1 мс - 51 
+  Serial.println(interval*0.001);
+  delay(interval*0.001); // 972 деления - было 7 мс, т.е. каждое деление будет 0.0072 на 7.2 мс
   
   digitalWrite(5, HIGH);
   flg_ap_interrupt = false;
   flg_timer_allow = false; 
-  delay(10); //10 ms
-  // считаем время
-  // запускаем пин
-  // формируем меандр, мб через задержку
-  // перезапускаем флаги
+  delay(1); // <<--- длина меандр
   digitalWrite(5, LOW);
-  
 }
-
 
 }
