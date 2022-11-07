@@ -32,9 +32,11 @@ bool digitalReadFast(uint8_t pin) {
 
 void function(){ // CHANGE не предоставляет состояния пина,придется узнать его при помощи digitalReadFast
   
-  if ((value1 > 51) && (value1 < 972) && (flg_ap_interrupt == false)){
+  if ((value1 > 51) && (value1 < 921) && (flg_ap_interrupt == false)){
     flg_timer_allow = true;      // выставляем флаг, что можно запускать таймер
-    Serial.println("2nd entering!");     // проверка на повторные срабатывания 
+    //Serial.println("2nd entering!");     // проверка на повторные срабатывания 
+    value1 = analogRead(0);            // 0...1023 >>> 5% - 51, 95% - 972, возьмем 8% - 82
+    interval = int (value1 * 8.7);
     flg_ap_interrupt == true;    // выставляем флаг, что прерывание состоялось 
   
 }
