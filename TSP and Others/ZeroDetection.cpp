@@ -1,25 +1,23 @@
-// Timer 0 Channel 1 = pin 5, Channel B = pin 6 
+// Библиотеки:
 #include "GyverTimers.h"
 #include "GyverTimer.h"
+   
+// Переменные:
+volatile bool flg_ap_interrupt = false;   // прерывание состоялось 
+volatile bool flg_timer_allow = false;    // флаг разрешения на запуск таймера  
+int potentiometr_init = 0;                // считывание с аналогового канала
+int value1 = 0;  
+int interval = 0;                         // интервал отсчета таймера
+uint32_t debounce; 
 
-GTimer myTimer(US, 5000); // таймер задержки на включение
-GTimer meandr(US, 5000); //  время длина меандра
-
-// переменные, которые изменяют свое значение в прерывании - volatile
-volatile bool signalStart = false;
-volatile bool control_flag = false;
-uint32_t debounce;
-int frequency = 25;
-
-bool digitalReadFast(uint8_t pin); // быстрый опрос пина
+// Функции: 
+bool digitalReadFast(uint8_t pin);        // быстрый опрос пина
 
 void setup(){
   pinMode(5, OUTPUT);
-  myTimer.setInterval(5000); // 1мс
-  meandr.setInterval(5000);  // 4мс
-  Serial.begin(250000);   // 9600 115200 250000
+  Serial.begin(250000);                   // 9600 115200 250000
   pinMode(3, INPUT);
-  attachInterrupt(1, function, CHANGE); // LOW, FALLING - срез, RISING - фронт, CHANGE - изменение
+  attachInterrupt(1, function, CHANGE);   // LOW, FALLING - срез, RISING - фронт, CHANGE - изменение
 }
 
 bool digitalReadFast(uint8_t pin) {
@@ -28,42 +26,54 @@ bool digitalReadFast(uint8_t pin) {
   } else if (pin < 14) {
     return bitRead(PINB, pin - 8);
   } else if (pin < 20) {
-    return bitRead(PINC, pin - 14);    // Return pin state
+    return bitRead(PINC, pin - 14);       // Return pin state
   }
 }
 
 void function(){ // CHANGE не предоставляет состояния пина,придется узнать его при помощи digitalReadFast
-  if (micros() - debounce >= 40 && digitalReadFast(3)){
-     debounce = micros();
-     signalStart = true;  // выставляем флаг
-     //digitalWrite(5, HIGH);
+  
+  if ((value1 > 51) && (value1 < 921) && (flg_ap_interrupt == false)){
+    flg_timer_allow = true;      // выставляем флаг, что можно запускать таймер
+    //Serial.println("2nd entering!");     // проверка на повторные срабатывания 
+    value1 = analogRead(0);            // 0...1023 >>> 5% - 51, 95% - 972, возьмем 8% - 82
+    interval = int (value1 * 8.7);
+    flg_ap_interrupt == true;    // выставляем флаг, что прерывание состоялось 
+  
+}
+  else {
+    Serial.println("empty enters");
   }
+  /*
+  if ((micros() - debounce >= 20) && digitalReadFast(3) &&  !flg_ap_interrupt){
+     debounce = micros();
+     flg_ap_interrupt = true;             // выставляем флаг, что прерывание состоялось (по этому флагу запрещаем второй вход в прерывание)
+  }
+  */
 }
 
 void loop(){
+  
+value1 = analogRead(0);            // 0...1023 >>> 5% - 51, 95% - 972, возьмем 8% - 82
+interval = int (value1 * 8.7);     // заменяем деление на 0.0087 (- цена деления) и дальнейшее округление до целого, на умножение на 8.7 мс
 
-
-if ((signalStart == true)&&(!control_flag)){ 
-    //myTimer.reset(); 
-    myTimer.start();
-    Serial.println("Check1");  
-}
-
-if (myTimer.isReady()) {
-  control_flag = true;
+while(flg_timer_allow){
+  // считаем время                 // запускаем пин
+  // формируем меандр, мб через задержку
+  // перезапускаем флаги
+  
+  Serial.print("interval = ");
+  Serial.println(interval);
+  //uint16_t interval_ms = int (interval*0.001);
+  
+  Serial.print("interval_ms = ");
+  Serial.println(interval*0.001);
+  delay(interval*0.001); // 972 деления - было 7 мс, т.е. каждое деление будет 0.0072 на 7.2 мс
+  
   digitalWrite(5, HIGH);
-  signalStart = LOW;
-  //meandr.reset(); 
-  meandr.start();  
-  myTimer.stop();
-  Serial.println("Check2"); 
+  flg_ap_interrupt = false;
+  flg_timer_allow = false; 
+  delay(1); // <<--- длина меандр
+  digitalWrite(5, LOW);
 }
 
-if (meandr.isReady()) { 
-  digitalWrite(5, LOW);
-  meandr.stop();
-  Serial.println("Check3"); 
- }
-
- 
 }
